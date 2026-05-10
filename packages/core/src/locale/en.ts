@@ -342,10 +342,6 @@ export const en: Locale = {
 
   themes: {
     title: 'Themes',
-    eyebrow: 'Visual identities',
-    modeLight: 'Light',
-    modeDark: 'Dark',
-    modeSystem: 'System',
     noThemesTitle: 'No themes yet',
     noThemesHintPrefix: 'Run ',
     noThemesHintSuffix: ' to author one — a markdown file under themes/ plus a sibling demo slide.',

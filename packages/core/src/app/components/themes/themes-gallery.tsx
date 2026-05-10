@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { format, useLocale } from '@/lib/use-locale';
-import { cn } from '@/lib/utils';
 import { loadThemeDemo, type Theme, type ThemeDemoModule, themes } from '../../lib/themes';
 import { SlideCanvas } from '../slide-canvas';
 
@@ -45,11 +44,10 @@ function ThemeCard({
       <div className="relative aspect-video overflow-hidden rounded-[6px] border border-hairline bg-card shadow-edge ring-1 ring-foreground/[0.04] group-hover:shadow-floating group-hover:ring-foreground/20 motion-safe:transition-[box-shadow,--tw-ring-color] motion-safe:duration-200">
         <ThemePreview theme={theme} />
       </div>
-      <div className="mt-3 flex items-baseline gap-2">
+      <div className="mt-3">
         <h3 className="min-w-0 truncate font-heading text-[14px] font-medium tracking-tight">
           {theme.name}
         </h3>
-        <ModeBadge mode={theme.mode} />
       </div>
       {theme.description ? (
         <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-muted-foreground">
@@ -103,30 +101,6 @@ function NoDemoState() {
         </p>
       </div>
     </div>
-  );
-}
-
-function ModeBadge({ mode }: { mode: 'light' | 'dark' | 'system' }) {
-  const t = useLocale();
-  const label =
-    mode === 'light'
-      ? t.themes.modeLight
-      : mode === 'dark'
-        ? t.themes.modeDark
-        : t.themes.modeSystem;
-  return (
-    <span
-      className={cn(
-        'shrink-0 rounded-[3px] px-1.5 py-0.5 text-[9.5px] font-medium uppercase tracking-[0.08em] ring-1',
-        mode === 'dark'
-          ? 'bg-foreground text-background ring-foreground/40'
-          : mode === 'light'
-            ? 'bg-card text-foreground ring-border'
-            : 'bg-muted text-muted-foreground ring-border',
-      )}
-    >
-      {label}
-    </span>
   );
 }
 

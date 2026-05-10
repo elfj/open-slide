@@ -19,7 +19,6 @@ function resolved(id: string): string {
 type Frontmatter = {
   name: string;
   description: string;
-  mode: 'light' | 'dark' | 'system';
 };
 
 type ParsedTheme = {
@@ -50,12 +49,10 @@ function parseFrontmatter(raw: string, themeId: string): { fm: Frontmatter; body
     data[m[1]] = value;
   }
 
-  const mode = data.mode === 'light' || data.mode === 'dark' ? data.mode : 'system';
   return {
     fm: {
       name: data.name || themeId,
       description: data.description || '',
-      mode,
     },
     body: body.trim(),
   };
@@ -89,7 +86,6 @@ function generateThemesModule(themes: ParsedTheme[], isDev: boolean): string {
     id: t.id,
     name: t.frontmatter.name,
     description: t.frontmatter.description,
-    mode: t.frontmatter.mode,
     body: t.body,
     hasDemo: t.demoAbs !== null,
   }));

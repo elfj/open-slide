@@ -342,10 +342,6 @@ export const zhCN: Locale = {
 
   themes: {
     title: '主题',
-    eyebrow: '视觉风格',
-    modeLight: '浅色',
-    modeDark: '深色',
-    modeSystem: '系统',
     noThemesTitle: '尚无主题',
     noThemesHintPrefix: '运行 ',
     noThemesHintSuffix: ' 来创建一个 — 一个位于 themes/ 的 markdown 文件，加上同名的 demo slide。',

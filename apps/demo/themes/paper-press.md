@@ -1,7 +1,6 @@
 ---
 name: Paper Press
 description: Light print-inspired deck — cream paper, ink-black headlines, vermilion accent, no motion.
-mode: light
 ---
 
 # Paper Press

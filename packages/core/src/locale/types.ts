@@ -365,10 +365,6 @@ export type Locale = {
 
   themes: {
     title: string;
-    eyebrow: string;
-    modeLight: string;
-    modeDark: string;
-    modeSystem: string;
     noThemesTitle: string;
     noThemesHintPrefix: string;
     noThemesHintSuffix: string;

@@ -35,7 +35,6 @@ declare module 'virtual:open-slide/themes' {
     id: string;
     name: string;
     description: string;
-    mode: 'light' | 'dark' | 'system';
     body: string;
     hasDemo: boolean;
   };

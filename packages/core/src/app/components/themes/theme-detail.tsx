@@ -2,7 +2,6 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { format, useLocale } from '@/lib/use-locale';
-import { cn } from '@/lib/utils';
 import { loadThemeDemo, type ThemeDemoModule, themes } from '../../lib/themes';
 import { SlideCanvas } from '../slide-canvas';
 
@@ -71,7 +70,6 @@ export function ThemeDetail({ themeId, onBack }: { themeId: string; onBack: () =
         <h2 className="font-heading text-[26px] font-semibold leading-[1.05] tracking-[-0.025em] md:text-[32px]">
           {theme.name}
         </h2>
-        <ModeBadge mode={theme.mode} />
         {theme.description ? (
           <p className="basis-full text-[13px] leading-relaxed text-muted-foreground">
             {theme.description}
@@ -130,30 +128,6 @@ export function ThemeDetail({ themeId, onBack }: { themeId: string; onBack: () =
         </div>
       </div>
     </div>
-  );
-}
-
-function ModeBadge({ mode }: { mode: 'light' | 'dark' | 'system' }) {
-  const t = useLocale();
-  const label =
-    mode === 'light'
-      ? t.themes.modeLight
-      : mode === 'dark'
-        ? t.themes.modeDark
-        : t.themes.modeSystem;
-  return (
-    <span
-      className={cn(
-        'shrink-0 rounded-[3px] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] ring-1',
-        mode === 'dark'
-          ? 'bg-foreground text-background ring-foreground/40'
-          : mode === 'light'
-            ? 'bg-card text-foreground ring-border'
-            : 'bg-muted text-muted-foreground ring-border',
-      )}
-    >
-      {label}
-    </span>
   );
 }
 

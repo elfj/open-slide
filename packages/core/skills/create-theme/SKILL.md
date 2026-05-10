@@ -52,7 +52,6 @@ Produce a file with this exact section order. Section bodies adapt to the theme;
 ---
 name: <Human title, e.g. "Editorial Noir">
 description: <one-line elevator pitch>
-mode: light | dark | system
 ---
 
 # <Theme name>
@@ -220,7 +219,6 @@ Run this checklist before finishing:
 - [ ] Both files written: `themes/<id>.md` and `themes/<id>.demo.tsx`. No slide changes, no config changes.
 - [ ] Demo `.tsx` exports 2–3 pages and inlines the same Title/Footer/Eyebrow components defined in the markdown.
 - [ ] Demo opens cleanly in the **Themes** panel of the dev UI — re-checked by you only by reading the file (do not start a server).
-- [ ] Frontmatter `mode` is one of `light`, `dark`, `system`.
 
 ## Step 6 — Hand off
 

@@ -207,7 +207,6 @@ export function Home() {
                     <span className="folio ml-1 self-end pb-2">
                       {themeRegistry.length.toString().padStart(2, '0')}
                     </span>
-                    <span className="eyebrow ml-2 self-end pb-2">{t.themes.eyebrow}</span>
                   </div>
                 </header>
                 <ThemesGallery onOpen={(id) => selectThemeDetail(id)} />

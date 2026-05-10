@@ -342,10 +342,6 @@ export const zhTW: Locale = {
 
   themes: {
     title: '主題',
-    eyebrow: '視覺風格',
-    modeLight: '淺色',
-    modeDark: '深色',
-    modeSystem: '系統',
     noThemesTitle: '尚無主題',
     noThemesHintPrefix: '執行 ',
     noThemesHintSuffix: ' 來建立一個 — 一個位於 themes/ 的 markdown 檔案，加上同名的 demo slide。',

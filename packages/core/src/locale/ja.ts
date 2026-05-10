@@ -346,10 +346,6 @@ export const ja: Locale = {
 
   themes: {
     title: 'テーマ',
-    eyebrow: 'ビジュアル ID',
-    modeLight: 'ライト',
-    modeDark: 'ダーク',
-    modeSystem: 'システム',
     noThemesTitle: 'テーマがまだありません',
     noThemesHintPrefix: '',
     noThemesHintSuffix:

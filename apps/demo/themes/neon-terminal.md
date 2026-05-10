@@ -1,7 +1,6 @@
 ---
 name: Neon Terminal
 description: Dark dev-terminal deck — full monospace, neon green accent, blinking cursor, optional CRT scanlines.
-mode: dark
 ---
 
 # Neon Terminal

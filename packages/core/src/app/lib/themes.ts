@@ -2,13 +2,10 @@ import { loadThemeDemo as load, themes as raw } from 'virtual:open-slide/themes'
 import type { DesignSystem } from './design';
 import type { Page } from './sdk';
 
-export type ThemeMode = 'light' | 'dark' | 'system';
-
 export type Theme = {
   id: string;
   name: string;
   description: string;
-  mode: ThemeMode;
   body: string;
   hasDemo: boolean;
 };

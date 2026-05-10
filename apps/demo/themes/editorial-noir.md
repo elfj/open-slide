@@ -1,7 +1,6 @@
 ---
 name: Editorial Noir
 description: Dark editorial deck — serif headlines, amber accent, magazine-style restraint.
-mode: dark
 ---
 
 # Editorial Noir
