@@ -121,7 +121,6 @@ export function ThemeDetail({ themeId, onBack }: { themeId: string; onBack: () =
         </div>
 
         <div className="flex min-h-0 min-w-0 flex-col gap-2">
-          <span className="eyebrow">{t.themes.markdownEyebrow}</span>
           <pre className="max-h-[640px] w-full overflow-auto rounded-[8px] border border-hairline bg-card p-4 font-mono text-[11.5px] leading-relaxed text-foreground/90">
             {renderBodyWithSwatches(theme.body)}
           </pre>

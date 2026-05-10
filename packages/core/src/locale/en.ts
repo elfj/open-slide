@@ -352,7 +352,6 @@ export const en: Locale = {
     pageOf: 'page {n}/{total}',
     nextPageAria: 'Next page',
     prevPageAria: 'Previous page',
-    markdownEyebrow: 'Theme spec',
     openThemeAria: 'Open theme {name}',
   },
 };

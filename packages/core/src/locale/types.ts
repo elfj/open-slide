@@ -376,7 +376,6 @@ export type Locale = {
     pageOf: string;
     nextPageAria: string;
     prevPageAria: string;
-    markdownEyebrow: string;
     /** template: "Open theme {name}" */
     openThemeAria: string;
   };

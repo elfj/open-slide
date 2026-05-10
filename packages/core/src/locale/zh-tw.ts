@@ -352,7 +352,6 @@ export const zhTW: Locale = {
     pageOf: '第 {n}/{total} 頁',
     nextPageAria: '下一頁',
     prevPageAria: '上一頁',
-    markdownEyebrow: '主題規格',
     openThemeAria: '開啟主題 {name}',
   },
 };

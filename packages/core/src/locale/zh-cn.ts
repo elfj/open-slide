@@ -352,7 +352,6 @@ export const zhCN: Locale = {
     pageOf: '第 {n}/{total} 页',
     nextPageAria: '下一页',
     prevPageAria: '上一页',
-    markdownEyebrow: '主题规格',
     openThemeAria: '打开主题 {name}',
   },
 };

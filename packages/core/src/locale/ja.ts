@@ -357,7 +357,6 @@ export const ja: Locale = {
     pageOf: '{n}/{total} ページ',
     nextPageAria: '次のページ',
     prevPageAria: '前のページ',
-    markdownEyebrow: 'テーマ仕様',
     openThemeAria: 'テーマ {name} を開く',
   },
 };
