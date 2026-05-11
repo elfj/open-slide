@@ -353,5 +353,7 @@ export const en: Locale = {
     nextPageAria: 'Next page',
     prevPageAria: 'Previous page',
     openThemeAria: 'Open theme {name}',
+    usedBy: 'Slides using this theme',
+    usedByEmpty: 'No slides use this theme yet.',
   },
 };

@@ -378,5 +378,7 @@ export type Locale = {
     prevPageAria: string;
     /** template: "Open theme {name}" */
     openThemeAria: string;
+    usedBy: string;
+    usedByEmpty: string;
   };
 };

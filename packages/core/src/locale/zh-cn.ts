@@ -353,5 +353,7 @@ export const zhCN: Locale = {
     nextPageAria: '下一页',
     prevPageAria: '上一页',
     openThemeAria: '打开主题 {name}',
+    usedBy: '使用此主题的 slides',
+    usedByEmpty: '尚未有 slides 使用此主题。',
   },
 };

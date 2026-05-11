@@ -1327,4 +1327,5 @@ const Closing: Page = () => (
 );
 
 export const meta: SlideMeta = { title: 'Material Design (2014)' };
+export const theme = 'bright-sans';
 export default [Cover, Elevation, Color, Type, Ripple, Components, Closing] satisfies Page[];

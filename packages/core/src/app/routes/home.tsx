@@ -1,4 +1,13 @@
-import { FolderInput, FolderPlus, MoreHorizontal, Pencil, Search, Trash2, X } from 'lucide-react';
+import {
+  FolderInput,
+  FolderPlus,
+  MoreHorizontal,
+  Palette,
+  Pencil,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -347,13 +356,23 @@ function SlideCard({
               </div>
             )}
           </div>
-
-          <div className="mt-3">
+        </Link>
+        <div className="mt-3 flex items-center gap-2">
+          <Link to={`/s/${id}`} className="min-w-0 flex-1 focus-visible:outline-none">
             <h3 className="min-w-0 truncate font-heading text-[14px] font-medium tracking-tight">
               {displayTitle}
             </h3>
-          </div>
-        </Link>
+          </Link>
+          {slide?.theme && (
+            <Link
+              to={`/themes/${encodeURIComponent(slide.theme)}`}
+              className="inline-flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              <Palette className="size-3" aria-hidden />
+              <span className="max-w-[120px] truncate">{slide.theme}</span>
+            </Link>
+          )}
+        </div>
 
         {import.meta.env.DEV && (
           <div className="absolute right-2 top-2">

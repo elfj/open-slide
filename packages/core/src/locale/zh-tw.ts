@@ -353,5 +353,7 @@ export const zhTW: Locale = {
     nextPageAria: '下一頁',
     prevPageAria: '上一頁',
     openThemeAria: '開啟主題 {name}',
+    usedBy: '使用此主題的 slides',
+    usedByEmpty: '尚未有 slides 使用此主題。',
   },
 };

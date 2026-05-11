@@ -11,6 +11,7 @@ export type SlideModule = {
   default: Page[];
   meta?: SlideMeta;
   design?: DesignSystem;
+  theme?: string;
   // Index-aligned with `default`.
   notes?: (string | undefined)[];
 };

@@ -1,7 +1,10 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Fragment, type ReactNode, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { format, useLocale } from '@/lib/use-locale';
+import type { SlideModule } from '../../lib/sdk';
+import { loadSlide, slidesByTheme } from '../../lib/slides';
 import { loadThemeDemo, type ThemeDemoModule, themes } from '../../lib/themes';
 import { SlideCanvas } from '../slide-canvas';
 
@@ -28,6 +31,7 @@ export function ThemeDetail({ themeId, onBack }: { themeId: string; onBack: () =
 
   const pages = demo?.default ?? [];
   const totalPages = pages.length;
+  const usedBySlideIds = useMemo(() => (theme ? slidesByTheme(theme.id) : []), [theme]);
 
   useEffect(() => {
     if (totalPages <= 1) return;
@@ -126,7 +130,73 @@ export function ThemeDetail({ themeId, onBack }: { themeId: string; onBack: () =
           </pre>
         </div>
       </div>
+
+      <section className="mt-2 flex flex-col gap-5 border-t border-hairline pt-8 md:mt-4 md:pt-10">
+        <div className="flex flex-wrap items-baseline gap-3">
+          <span className="eyebrow">{t.themes.usedBy}</span>
+          {usedBySlideIds.length > 0 ? (
+            <span className="folio">{usedBySlideIds.length.toString().padStart(2, '0')}</span>
+          ) : null}
+        </div>
+        {usedBySlideIds.length === 0 ? (
+          <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+            {t.themes.usedByEmpty}
+          </p>
+        ) : (
+          <ul className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-5 gap-y-7 md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
+            {usedBySlideIds.map((id) => (
+              <li key={id}>
+                <ThemeSlideCard id={id} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
+  );
+}
+
+function ThemeSlideCard({ id }: { id: string }) {
+  const t = useLocale();
+  const [slide, setSlide] = useState<SlideModule | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadSlide(id)
+      .then((mod) => {
+        if (!cancelled) setSlide(mod);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const FirstPage = slide?.default[0];
+  const displayTitle = slide?.meta?.title ?? id;
+
+  return (
+    <Link to={`/s/${id}`} className="group block focus-visible:outline-none">
+      <div className="relative aspect-video overflow-hidden rounded-[6px] border border-hairline bg-card shadow-edge ring-1 ring-foreground/[0.04] group-hover:shadow-floating group-hover:ring-foreground/20 motion-safe:transition-[box-shadow,--tw-ring-color] motion-safe:duration-200">
+        {FirstPage ? (
+          <div className="h-full w-full motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-[1.03]">
+            <SlideCanvas flat freezeMotion design={slide?.design}>
+              <FirstPage />
+            </SlideCanvas>
+          </div>
+        ) : (
+          <div className="grid h-full w-full place-items-center text-[10px] tracking-[0.16em] uppercase text-muted-foreground/60">
+            {t.common.loading}
+          </div>
+        )}
+      </div>
+      <div className="mt-2.5">
+        <h3 className="min-w-0 truncate font-heading text-[13px] font-medium tracking-tight">
+          {displayTitle}
+        </h3>
+        <p className="mt-0.5 truncate font-mono text-[10.5px] text-muted-foreground/80">{id}</p>
+      </div>
+    </Link>
   );
 }
 

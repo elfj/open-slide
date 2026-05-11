@@ -1,6 +1,7 @@
 declare module 'virtual:open-slide/slides' {
   import type { SlideModule } from './lib/sdk';
   export const slideIds: string[];
+  export const slideThemes: Record<string, string>;
   export function loadSlide(id: string): Promise<SlideModule>;
 }
 

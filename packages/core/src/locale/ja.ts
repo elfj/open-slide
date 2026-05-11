@@ -358,5 +358,7 @@ export const ja: Locale = {
     nextPageAria: '次のページ',
     prevPageAria: '前のページ',
     openThemeAria: 'テーマ {name} を開く',
+    usedBy: 'このテーマを使うスライド',
+    usedByEmpty: 'このテーマを使うスライドはまだありません。',
   },
 };
