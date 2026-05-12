@@ -115,8 +115,8 @@ const fill = {
 } as const;
 
 const eyebrow = {
-  fontSize: 22,
-  letterSpacing: '0.24em',
+  fontSize: 14,
+  letterSpacing: '0.32em',
   textTransform: 'uppercase' as const,
   fontWeight: 500,
   color: 'var(--osd-accent)',
