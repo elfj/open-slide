@@ -7,7 +7,7 @@ export const design: DesignSystem = {
     display: "'JetBrains Mono', 'Menlo', 'Consolas', monospace",
     body: "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
   },
-  typeScale: { hero: 132, body: 34 },
+  typeScale: { hero: 156, body: 34 },
   radius: 6,
 };
 
@@ -19,11 +19,15 @@ const mint = '#84ffae';
 const warm = '#ffa860';
 const violet = '#c598ff';
 const danger = '#ff7a85';
+const serifFont = "'Iowan Old Style', 'New York', 'Times New Roman', Georgia, serif";
+
+const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
 
 const TOTAL = 16;
 
 const keyframes = `
-@keyframes osa-fadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes osa-fadeUp { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes osa-reveal { from { opacity: 0; transform: translateY(36px); filter: blur(8px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
 @keyframes osa-fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes osa-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 @keyframes osa-typeIn { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
@@ -58,16 +62,34 @@ const Eyebrow = ({ children, delay = 0 }: { children: ReactNode; delay?: number 
   <div
     style={{
       fontFamily: 'var(--osd-font-display)',
-      fontSize: 24,
+      fontSize: 16,
       fontWeight: 500,
-      letterSpacing: '0.18em',
+      letterSpacing: '0.32em',
       textTransform: 'uppercase',
       color: 'var(--osd-accent)',
-      animation: `osa-fadeUp 600ms ease-out ${delay}ms both`,
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 16,
+      animation: `osa-fadeUp 900ms ${EASE_OUT} ${delay}ms both`,
+    }}
+  >
+    <span aria-hidden style={{ width: 28, height: 1, background: 'var(--osd-accent)' }} />
+    {children}
+  </div>
+);
+
+const Serif = ({ children, color }: { children: ReactNode; color?: string }) => (
+  <em
+    style={{
+      fontFamily: serifFont,
+      fontStyle: 'italic',
+      fontWeight: 400,
+      letterSpacing: '-0.02em',
+      color: color ?? 'var(--osd-accent)',
     }}
   >
     {children}
-  </div>
+  </em>
 );
 
 const Heading = ({
@@ -85,10 +107,10 @@ const Heading = ({
       fontSize: size,
       fontWeight: 700,
       lineHeight: 1.05,
-      letterSpacing: '-0.01em',
+      letterSpacing: '-0.015em',
       margin: 0,
       color: 'var(--osd-text)',
-      animation: `osa-fadeUp 700ms ease-out ${delay}ms both`,
+      animation: `osa-reveal 1100ms ${EASE_OUT} ${delay}ms both`,
     }}
   >
     {children}
@@ -101,26 +123,46 @@ const Footer = ({ section, n }: { section: string; n: number }) => (
       position: 'absolute',
       left: 100,
       right: 100,
-      bottom: 48,
+      bottom: 56,
       display: 'flex',
       justifyContent: 'space-between',
-      alignItems: 'baseline',
+      alignItems: 'center',
       fontFamily: 'var(--osd-font-display)',
-      fontSize: 22,
+      fontSize: 14,
       color: muted,
       borderTop: `1px solid ${rule}`,
-      paddingTop: 18,
-      letterSpacing: '0.06em',
+      paddingTop: 20,
+      letterSpacing: '0.24em',
+      textTransform: 'uppercase',
+      animation: `osa-fadeIn 1000ms ease 800ms both`,
     }}
   >
-    <span>
-      <span style={{ color: 'var(--osd-accent)', marginRight: 12 }}>●</span>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+      <span
+        aria-hidden
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: '50%',
+          background: 'var(--osd-accent)',
+          boxShadow: `0 0 8px var(--osd-accent)`,
+        }}
+      />
       {section}
-      <span style={{ color: rule, margin: '0 18px' }}>·</span>
+      <span style={{ color: rule }}>/</span>
       <span style={{ color: text2 }}>open-slide</span>
     </span>
-    <span style={{ fontVariantNumeric: 'tabular-nums' }}>
-      {String(n).padStart(2, '0')} / {String(TOTAL).padStart(2, '0')}
+    <span
+      style={{
+        fontVariantNumeric: 'tabular-nums',
+        display: 'inline-flex',
+        gap: 6,
+        letterSpacing: '0.18em',
+      }}
+    >
+      <span style={{ color: 'var(--osd-text)' }}>{String(n).padStart(2, '0')}</span>
+      <span style={{ opacity: 0.4 }}>/</span>
+      <span>{String(TOTAL).padStart(2, '0')}</span>
     </span>
   </div>
 );
@@ -159,51 +201,61 @@ const Cover: Page = () => (
         maxWidth: 1500,
       }}
     >
-      <Eyebrow>[ deep dive · architecture · v1 ]</Eyebrow>
-      <div style={{ height: 56 }} />
+      <Eyebrow>deep dive · architecture · v1</Eyebrow>
+      <div style={{ height: 48 }} />
       <h1
         style={{
           fontFamily: 'var(--osd-font-display)',
           fontSize: 'var(--osd-size-hero)',
           fontWeight: 800,
-          lineHeight: 1.02,
-          letterSpacing: '-0.02em',
+          lineHeight: 0.96,
+          letterSpacing: '-0.035em',
           margin: 0,
+          animation: `osa-reveal 1200ms ${EASE_OUT} 200ms both`,
         }}
       >
-        <span
-          style={{ display: 'inline-block', animation: 'osa-typeIn 900ms steps(28, end) both' }}
-        >
-          Inside open-slide
-        </span>
+        Inside <Serif>open-slide</Serif>
         <span
           aria-hidden
           style={{
             display: 'inline-block',
             width: '0.5em',
-            height: '0.92em',
+            height: '0.86em',
             background: 'var(--osd-accent)',
             marginLeft: 16,
-            verticalAlign: '-8px',
-            animation: 'osa-blink 1.1s steps(1) infinite',
-            boxShadow: '0 0 18px rgba(110,231,255,0.6)',
+            verticalAlign: '-6px',
+            animation: 'osa-blink 1.1s steps(1) 1800ms infinite',
+            boxShadow: '0 0 24px rgba(110,231,255,0.65)',
           }}
         />
       </h1>
-      <div style={{ height: 36 }} />
+      <div style={{ height: 28 }} />
+      <span
+        aria-hidden
+        style={{
+          display: 'block',
+          height: 1,
+          width: 96,
+          background: 'rgba(110,231,255,0.4)',
+          transformOrigin: 'left',
+          animation: `osa-fadeUp 900ms ${EASE_OUT} 600ms both`,
+        }}
+      />
+      <div style={{ height: 32 }} />
       <p
         style={{
-          fontSize: 40,
+          fontSize: 38,
           lineHeight: 1.45,
           color: text2,
           maxWidth: 1300,
           margin: 0,
-          animation: 'osa-fadeUp 700ms ease-out 600ms both',
+          letterSpacing: '-0.005em',
+          animation: `osa-fadeUp 1000ms ${EASE_OUT} 760ms both`,
         }}
       >
-        How a <span style={{ color: 'var(--osd-accent)' }}>Page[]</span> becomes a
-        <span style={{ color: mint }}> 1920×1080 </span>
-        deck — every hook, every virtual module, every wire in the runtime.
+        How a <span style={{ color: 'var(--osd-accent)' }}>Page[]</span> becomes a{' '}
+        <span style={{ color: mint }}>1920×1080</span> deck — every hook, every virtual module,{' '}
+        <Serif color={text2}>every wire in the runtime.</Serif>
       </p>
       <div style={{ height: 64 }} />
       <div
@@ -212,9 +264,10 @@ const Cover: Page = () => (
           alignItems: 'center',
           gap: 18,
           fontFamily: 'var(--osd-font-display)',
-          fontSize: 22,
+          fontSize: 18,
           color: muted,
-          animation: 'osa-fadeIn 800ms ease-out 1200ms both',
+          letterSpacing: '0.1em',
+          animation: `osa-fadeIn 1100ms ${EASE_OUT} 1200ms both`,
         }}
       >
         <span style={{ color: mint }}>$</span>
@@ -226,7 +279,7 @@ const Cover: Page = () => (
           press{' '}
           <kbd
             style={{
-              padding: '2px 10px',
+              padding: '3px 12px',
               border: `1px solid ${rule}`,
               borderRadius: 4,
               color: text2,
@@ -1676,13 +1729,44 @@ const Cli: Page = () => {
   );
 };
 
+const RecapCard = ({
+  tint,
+  title,
+  body,
+  delay,
+}: {
+  tint: string;
+  title: string;
+  body: string;
+  delay: number;
+}) => (
+  <div
+    style={{
+      padding: '28px 26px',
+      background: surface,
+      border: `1px solid ${rule}`,
+      borderTop: `3px solid ${tint}`,
+      borderRadius: 8,
+      animation: `osa-rise 900ms ${EASE_OUT} ${delay}ms both`,
+    }}
+  >
+    <div
+      style={{
+        fontFamily: 'var(--osd-font-display)',
+        fontSize: 14,
+        color: tint,
+        letterSpacing: '0.28em',
+        textTransform: 'uppercase',
+        marginBottom: 12,
+      }}
+    >
+      {title}
+    </div>
+    <div style={{ fontSize: 24, color: text2, lineHeight: 1.45 }}>{body}</div>
+  </div>
+);
+
 const Closing: Page = () => {
-  const recap = [
-    { tint: 'var(--osd-accent)', title: 'discovery', body: 'fast-glob → 3 virtual modules' },
-    { tint: mint, title: 'plugin', body: 'four hooks, no compiler hacks' },
-    { tint: warm, title: 'render', body: '1920×1080 canvas, transform: scale' },
-    { tint: violet, title: 'tools', body: 'design AST, inspector, present mode' },
-  ];
   return (
     <div style={{ ...fill, padding: '120px 100px' }}>
       <style>{keyframes}</style>
@@ -1704,59 +1788,63 @@ const Closing: Page = () => {
         <h1
           style={{
             fontFamily: 'var(--osd-font-display)',
-            fontSize: 140,
+            fontSize: 160,
             fontWeight: 800,
-            lineHeight: 1.02,
-            letterSpacing: '-0.02em',
+            lineHeight: 0.96,
+            letterSpacing: '-0.035em',
             margin: 0,
-            animation: 'osa-fadeUp 700ms ease-out 200ms both',
+            animation: `osa-reveal 1200ms ${EASE_OUT} 200ms both`,
           }}
         >
-          That's the whole machine.
+          That's the <Serif>whole machine.</Serif>
         </h1>
-        <div style={{ height: 36 }} />
+        <div style={{ height: 28 }} />
+        <span
+          aria-hidden
+          style={{
+            display: 'block',
+            height: 1,
+            width: 96,
+            background: 'rgba(110,231,255,0.4)',
+            animation: `osa-fadeUp 900ms ${EASE_OUT} 580ms both`,
+          }}
+        />
+        <div style={{ height: 28 }} />
         <p
           style={{
-            fontSize: 36,
-            lineHeight: 1.5,
+            fontSize: 34,
+            lineHeight: 1.55,
             color: text2,
             maxWidth: 1500,
             margin: 0,
-            animation: 'osa-fadeUp 700ms ease-out 500ms both',
+            letterSpacing: '-0.005em',
+            animation: `osa-fadeUp 1000ms ${EASE_OUT} 740ms both`,
           }}
         >
-          A globber. Three virtual modules. Four plugin hooks. One scaled canvas. Everything else is
-          React you wrote yourself.
+          A globber. Three virtual modules. Four plugin hooks. One scaled canvas. Everything else is{' '}
+          <Serif color={text2}>React you wrote yourself.</Serif>
         </p>
         <div style={{ height: 64 }} />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
-          {recap.map((r, i) => (
-            <div
-              key={r.title}
-              style={{
-                padding: '24px 24px',
-                background: surface,
-                border: `1px solid ${rule}`,
-                borderTop: `3px solid ${r.tint}`,
-                borderRadius: 8,
-                animation: `osa-rise 600ms cubic-bezier(.2,.7,.3,1) ${800 + i * 160}ms both`,
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: 'var(--osd-font-display)',
-                  fontSize: 20,
-                  color: r.tint,
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  marginBottom: 10,
-                }}
-              >
-                {r.title}
-              </div>
-              <div style={{ fontSize: 26, color: text2, lineHeight: 1.4 }}>{r.body}</div>
-            </div>
-          ))}
+          <RecapCard
+            tint="var(--osd-accent)"
+            title="discovery"
+            body="fast-glob → 3 virtual modules"
+            delay={900}
+          />
+          <RecapCard tint={mint} title="plugin" body="four hooks, no compiler hacks" delay={1060} />
+          <RecapCard
+            tint={warm}
+            title="render"
+            body="1920×1080 canvas, transform: scale"
+            delay={1220}
+          />
+          <RecapCard
+            tint={violet}
+            title="tools"
+            body="design AST, inspector, present mode"
+            delay={1380}
+          />
         </div>
       </div>
       <Footer section="closing" n={16} />
