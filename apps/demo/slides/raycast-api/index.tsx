@@ -7,7 +7,7 @@ export const design: DesignSystem = {
     display: '-apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", system-ui, sans-serif',
     body: '-apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", system-ui, sans-serif',
   },
-  typeScale: { hero: 112, body: 24 },
+  typeScale: { hero: 132, body: 24 },
   radius: 14,
 };
 
@@ -93,24 +93,27 @@ const Eyebrow = ({ children, delay = 0 }: { children: React.ReactNode; delay?: n
       display: 'inline-flex',
       alignItems: 'center',
       gap: 12,
-      padding: '10px 18px',
+      padding: '8px 16px 8px 12px',
       borderRadius: 999,
       border: `1px solid ${palette.border}`,
-      background: palette.surface,
-      fontSize: 22,
-      letterSpacing: '0.18em',
+      background: 'rgba(255,255,255,0.02)',
+      backdropFilter: 'blur(8px)',
+      fontFamily: fonts.mono,
+      fontSize: 13,
+      letterSpacing: '0.28em',
       textTransform: 'uppercase',
       color: palette.muted,
       animationDelay: `${delay}ms`,
     }}
   >
     <span
+      aria-hidden
       style={{
-        width: 8,
-        height: 8,
+        width: 7,
+        height: 7,
         borderRadius: '50%',
         background: 'var(--osd-accent)',
-        boxShadow: `0 0 12px var(--osd-accent)`,
+        boxShadow: `0 0 10px var(--osd-accent)`,
       }}
     />
     {children}
@@ -127,16 +130,40 @@ const Footer = ({ index, total }: { index: number; total: number }) => (
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      fontSize: 22,
+      fontSize: 13,
       color: palette.muted,
       fontFamily: fonts.mono,
-      letterSpacing: '0.04em',
+      letterSpacing: '0.22em',
+      textTransform: 'uppercase',
+      borderTop: `1px solid ${palette.border}`,
+      paddingTop: 18,
+      animation: 'rcFade 1000ms ease 800ms both',
     }}
   >
-    <span>raycast.com / developers</span>
-    <span>
-      {String(index).padStart(2, '0')}{' '}
-      <span style={{ opacity: 0.4 }}>/ {String(total).padStart(2, '0')}</span>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+      <span
+        aria-hidden
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: '50%',
+          background: 'var(--osd-accent)',
+          boxShadow: '0 0 8px var(--osd-accent)',
+        }}
+      />
+      raycast.com <span style={{ color: palette.border }}>/</span> developers
+    </span>
+    <span
+      style={{
+        fontVariantNumeric: 'tabular-nums',
+        display: 'inline-flex',
+        gap: 6,
+        letterSpacing: '0.18em',
+      }}
+    >
+      <span style={{ color: palette.text }}>{String(index).padStart(2, '0')}</span>
+      <span style={{ opacity: 0.4 }}>/</span>
+      <span>{String(total).padStart(2, '0')}</span>
     </span>
   </div>
 );
