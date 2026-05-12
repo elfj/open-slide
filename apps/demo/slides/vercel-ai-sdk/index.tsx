@@ -147,37 +147,48 @@ const Cover: Page = () => (
     <div
       style={{
         ...fadeUp(0),
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
-        gap: 16,
-        fontSize: 24,
-        letterSpacing: '0.28em',
+        gap: 14,
+        fontSize: 14,
+        fontWeight: 600,
+        letterSpacing: '0.32em',
         color: palette.muted,
         textTransform: 'uppercase',
       }}
     >
       <span
+        aria-hidden
         style={{
-          width: 10,
-          height: 10,
+          width: 28,
+          height: 1,
+          background: 'var(--osd-accent)',
+          boxShadow: '0 0 8px var(--osd-accent)',
+        }}
+      />
+      <span
+        aria-hidden
+        style={{
+          width: 7,
+          height: 7,
           borderRadius: '50%',
           background: 'var(--osd-accent)',
-          boxShadow: '0 0 24px var(--osd-accent)',
+          boxShadow: '0 0 16px var(--osd-accent)',
           animation: 'vai-pulse 2.4s ease-in-out infinite',
         }}
       />
-      Introducing
+      Introducing — v5
     </div>
 
     <h1
       style={{
-        ...fadeUp(120),
+        ...fadeUp(160),
         fontFamily: 'var(--osd-font-display)',
         fontSize: 'var(--osd-size-hero)',
         fontWeight: 800,
-        lineHeight: 1.0,
+        lineHeight: 0.96,
         margin: '40px 0 0',
-        letterSpacing: '-0.04em',
+        letterSpacing: '-0.045em',
       }}
     >
       Vercel <span style={{ color: 'var(--osd-accent)' }}>AI&nbsp;SDK</span>
@@ -200,25 +211,34 @@ const Cover: Page = () => (
 
     <div
       style={{
-        ...fadeIn(700),
+        ...fadeIn(900),
         position: 'absolute',
-        bottom: 72,
+        bottom: 60,
         left: 160,
         right: 160,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        fontSize: 22,
+        fontSize: 13,
+        fontFamily: font.mono,
         color: palette.muted,
-        letterSpacing: '0.12em',
+        letterSpacing: '0.24em',
         textTransform: 'uppercase',
+        borderTop: `1px solid ${palette.border}`,
+        paddingTop: 20,
       }}
     >
-      <span>ai-sdk.dev</span>
-      <span style={{ display: 'flex', gap: 24 }}>
-        <span>v5</span>
-        <span style={{ color: palette.dim }}>·</span>
-        <span>{new Date().getFullYear()}</span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+        <span
+          aria-hidden
+          style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--osd-accent)' }}
+        />
+        ai-sdk.dev
+      </span>
+      <span style={{ display: 'inline-flex', gap: 16, fontVariantNumeric: 'tabular-nums' }}>
+        <span style={{ color: 'var(--osd-text)' }}>v5</span>
+        <span style={{ color: palette.dim }}>/</span>
+        <span style={{ opacity: 0.7 }}>{new Date().getFullYear()}</span>
       </span>
     </div>
   </div>
@@ -951,24 +971,29 @@ const Closing: Page = () => (
     <div
       style={{
         ...fadeUp(0),
-        fontSize: 26,
-        letterSpacing: '0.28em',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 14,
+        fontSize: 14,
+        fontWeight: 600,
+        letterSpacing: '0.32em',
         color: palette.muted,
         textTransform: 'uppercase',
-        marginBottom: 48,
+        marginBottom: 44,
       }}
     >
+      <span aria-hidden style={{ width: 28, height: 1, background: 'var(--osd-accent)' }} />
       Start shipping
     </div>
 
     <h2
       style={{
-        ...fadeUp(120),
+        ...fadeUp(160),
         fontFamily: 'var(--osd-font-display)',
-        fontSize: 168,
+        fontSize: 184,
         fontWeight: 800,
-        lineHeight: 1.0,
-        letterSpacing: '-0.045em',
+        lineHeight: 0.96,
+        letterSpacing: '-0.05em',
         margin: 0,
       }}
     >
