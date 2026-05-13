@@ -82,8 +82,7 @@ export const zhTW: Locale = {
 
   slide: {
     agentConnected: 'Agent 已連線',
-    agentConnectedTooltip:
-      'Agent 看得到你目前的 slide 和 Inspector 選擇，直接到聊天說「這張 slide」或「這個元素」就行。',
+    agentConnectedTooltip: '目前的 slide 與 Inspector 選擇會即時同步給 agent。',
     agentDisconnected: 'Agent 已斷線',
     agentDisconnectedTooltip:
       '已和 dev server 斷線，agent 沒辦法再看到你目前的 slide 或 Inspector 選擇。請重新啟動 dev server 來恢復連線。',
@@ -199,8 +198,7 @@ export const zhTW: Locale = {
     cropApply: '套用',
     cropResetAria: '重設裁切',
     agentWatching: 'Agent 正在關注',
-    agentWatchingTooltip:
-      'Agent 已經看到你選的元素，直接到聊天請它修改就行。想累積幾個一次問再來留 comments。',
+    agentWatchingTooltip: '選取的元素會即時同步給 agent。',
     agentNotWatching: 'Agent 沒在關注',
     agentNotWatchingTooltip:
       '已和 dev server 斷線，agent 看不到你選的元素了。請重新啟動 dev server 來恢復連線。',

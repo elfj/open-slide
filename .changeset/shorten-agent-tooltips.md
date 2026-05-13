@@ -2,4 +2,4 @@
 '@open-slide/core': patch
 ---
 
-Shorten the agent-connected and agent-watching tooltips so they read at a glance.
+Pare back the agent-connected and agent-watching tooltips to a single status line.
