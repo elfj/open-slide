@@ -289,7 +289,7 @@ export function Player({
     <div
       ref={setRoot}
       className={cn(
-        'relative flex h-dvh w-screen items-center justify-center bg-black',
+        'fixed inset-0 flex items-center justify-center overflow-hidden bg-black',
         controls && 'select-none',
         controls && (hideCursor ? 'cursor-none' : 'cursor-default'),
       )}
