@@ -104,7 +104,9 @@ export const en: Locale = {
     toastCopyLinkFailed: 'Failed to copy link',
     exportAsHtml: 'Export as HTML',
     exportAsPdf: 'Export as PDF',
+    exportAsPptx: 'Export as PPTX',
     pdfExportFailed: 'PDF export failed',
+    pptxExportFailed: 'PPTX export failed',
     pdfExportSafariUnsupported:
       'Export as PDF is not supported on Safari. Please try a Chromium-based browser instead.',
     present: 'Present',
@@ -341,6 +343,13 @@ export const en: Locale = {
     title: 'Exporting PDF',
     processing: 'Processing page {current} of {total}',
     printing: 'Opening print dialog…',
+    done: 'Done',
+  },
+
+  pptxToast: {
+    title: 'Exporting PPTX',
+    processing: 'Processing page {current} of {total}',
+    writing: 'Writing file…',
     done: 'Done',
   },
 

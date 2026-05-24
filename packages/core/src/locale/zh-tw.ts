@@ -103,7 +103,9 @@ export const zhTW: Locale = {
     toastCopyLinkFailed: '複製連結失敗',
     exportAsHtml: '匯出為 HTML',
     exportAsPdf: '匯出為 PDF',
+    exportAsPptx: '匯出為 PPTX',
     pdfExportFailed: 'PDF 匯出失敗',
+    pptxExportFailed: 'PPTX 匯出失敗',
     pdfExportSafariUnsupported:
       '匯出 PDF 目前不支援 Safari 裝置，請嘗試用 Chromium 基底瀏覽器替代。',
     present: '簡報',
@@ -340,6 +342,13 @@ export const zhTW: Locale = {
     title: '匯出 PDF',
     processing: '處理第 {current} / {total} 頁',
     printing: '正在開啟列印對話框…',
+    done: '完成',
+  },
+
+  pptxToast: {
+    title: '匯出 PPTX',
+    processing: '處理第 {current} / {total} 頁',
+    writing: '正在寫入檔案…',
     done: '完成',
   },
 

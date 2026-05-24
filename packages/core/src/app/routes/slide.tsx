@@ -12,6 +12,7 @@ import {
   MonitorSpeaker,
   Pencil,
   Play,
+  Presentation,
 } from 'lucide-react';
 import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
@@ -47,10 +48,12 @@ import { ClickNavZones } from '../components/click-nav-zones';
 import { NotesDrawer } from '../components/notes-drawer';
 import { PdfProgressToast } from '../components/pdf-progress-toast';
 import { openPresenterWindow, Player } from '../components/player';
+import { PptxProgressToast } from '../components/pptx-progress-toast';
 import { SlideCanvas } from '../components/slide-canvas';
 import { type ThumbnailActions, ThumbnailRail } from '../components/thumbnail-rail';
 import { exportSlideAsHtml } from '../lib/export-html';
 import { exportSlideAsPdf, isSafari } from '../lib/export-pdf';
+import { exportSlideAsPptx } from '../lib/export-pptx';
 import { remapNotesSessionCacheAfterReorder } from '../lib/inspector/use-notes';
 import { SlidePageProvider } from '../lib/page-context';
 import type { SlideModule } from '../lib/sdk';
@@ -495,6 +498,44 @@ export function Slide() {
                     >
                       <FileText />
                       {t.slide.exportAsPdf}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={exporting}
+                      onSelect={async () => {
+                        if (!slide || exporting) return;
+                        setExporting(true);
+                        const toastId = `pptx-export-${slideId}`;
+                        toast.custom(
+                          () => (
+                            <PptxProgressToast
+                              progress={{
+                                phase: 'processing',
+                                current: 0,
+                                total: pages.length,
+                                percent: 0,
+                              }}
+                            />
+                          ),
+                          { id: toastId, duration: Infinity },
+                        );
+                        try {
+                          await exportSlideAsPptx(slide, slideId, (p) => {
+                            toast.custom(() => <PptxProgressToast progress={p} />, {
+                              id: toastId,
+                              duration: Infinity,
+                            });
+                          });
+                        } catch (err) {
+                          console.error('[open-slide] pptx export failed', err);
+                          toast.error(t.slide.pptxExportFailed, { id: toastId, duration: 4000 });
+                        } finally {
+                          setExporting(false);
+                          toast.dismiss(toastId);
+                        }
+                      }}
+                    >
+                      <Presentation />
+                      {t.slide.exportAsPptx}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
