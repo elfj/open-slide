@@ -39,6 +39,58 @@ const FOOT: CSSProperties = {
   fontWeight: 500,
 };
 
+const Intro: Page = () => (
+  <div
+    style={{
+      ...fill,
+      display: 'grid',
+      gridTemplateRows: 'auto 1fr auto',
+      padding: '120px 144px',
+    }}
+  >
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+      <div style={EYEBROW}>the transition api</div>
+      <div style={{ ...EYEBROW, color: muted }}>preface</div>
+    </div>
+    <div style={{ alignSelf: 'center' }}>
+      <div style={{ ...EYEBROW, color: muted, marginBottom: 44 }}>now shipping · v1.7.0</div>
+      <h1
+        style={{
+          fontFamily: 'var(--osd-font-display)',
+          fontSize: 184,
+          fontWeight: 800,
+          lineHeight: 0.92,
+          letterSpacing: '-0.05em',
+          margin: 0,
+        }}
+      >
+        Introducing
+        <br />
+        <span style={{ color: 'var(--osd-accent)' }}>Transition</span>
+        <span style={{ color: 'var(--osd-accent)' }}>.</span>
+      </h1>
+      <p
+        style={{
+          fontSize: 28,
+          lineHeight: 1.5,
+          color: muted,
+          marginTop: 56,
+          maxWidth: 1100,
+          borderTop: `1px solid ${hairline}`,
+          paddingTop: 32,
+        }}
+      >
+        A per-page animation API. Two keyframe arrays, one easing curve, every transformable
+        property the browser already understands — and the GPU does the rest.
+      </p>
+    </div>
+    <div style={{ ...FOOT, display: 'flex', justifyContent: 'space-between' }}>
+      <span>00 · bloom</span>
+      <span>begin →</span>
+    </div>
+  </div>
+);
+
 const Cover: Page = () => (
   <div
     style={{
@@ -74,8 +126,8 @@ const Cover: Page = () => (
           maxWidth: 1100,
         }}
       >
-        Six effects you can&rsquo;t draw in a binary slide format — every one in under twenty lines
-        of code, every one rendered by your browser, every frame still vector.
+        Eight effects you can&rsquo;t draw in a binary slide format — every one in under twenty
+        lines of code, every one rendered by your browser, every frame still vector.
       </p>
     </div>
     <div style={{ ...FOOT, display: 'flex', justifyContent: 'space-between' }}>
@@ -343,8 +395,89 @@ const Closing: Page = () => (
   </div>
 );
 
+const Cli: Page = () => (
+  <div
+    style={{
+      ...fill,
+      display: 'grid',
+      gridTemplateRows: 'auto 1fr auto',
+      padding: '120px 144px',
+    }}
+  >
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+      <div style={EYEBROW}>try it now</div>
+      <div style={{ ...EYEBROW, color: muted }}>install</div>
+    </div>
+    <div style={{ alignSelf: 'center' }}>
+      <div style={{ ...EYEBROW, color: muted, marginBottom: 44 }}>one command · zero config</div>
+      <div
+        style={{
+          fontFamily: 'ui-monospace, "JetBrains Mono", monospace',
+          fontSize: 88,
+          fontWeight: 700,
+          letterSpacing: '-0.025em',
+          lineHeight: 1.1,
+          color: 'var(--osd-text)',
+        }}
+      >
+        <span style={{ color: muted }}>$ </span>
+        npx <span style={{ color: 'var(--osd-accent)' }}>@open-slide/cli</span> init
+      </div>
+      <p
+        style={{
+          fontSize: 26,
+          lineHeight: 1.55,
+          color: muted,
+          marginTop: 56,
+          maxWidth: 1100,
+          borderTop: `1px solid ${hairline}`,
+          paddingTop: 32,
+        }}
+      >
+        Scaffolds the project, installs the runtime, drops you straight into the dev server. The
+        whole showcase is a few keystrokes away — yours to fork, remix, ship.
+      </p>
+    </div>
+    <div style={{ ...FOOT, display: 'flex', justifyContent: 'space-between' }}>
+      <span>07 · cube</span>
+      <span>open-slide.dev</span>
+    </div>
+  </div>
+);
+
 const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
 const EASE_IN = 'cubic-bezier(0.7, 0, 0.84, 0)';
+
+// 0 · BLOOM — overexposure flash. Brightness + saturation spike alongside a heavy
+// blur, resolving back to clarity. The page arrives bleached-out and settles in.
+Intro.transition = {
+  duration: 820,
+  exit: {
+    duration: 340,
+    easing: EASE_IN,
+    keyframes: [
+      { opacity: 1, transform: 'scale(1)', filter: 'brightness(1) blur(0) saturate(1)' },
+      {
+        opacity: 0,
+        transform: 'scale(1.12)',
+        filter: 'brightness(3.6) blur(36px) saturate(0)',
+      },
+    ],
+  },
+  enter: {
+    duration: 600,
+    delay: 220,
+    easing: EASE_OUT,
+    keyframes: [
+      {
+        opacity: 0,
+        transform: 'scale(1.28)',
+        filter: 'brightness(4) blur(48px) saturate(0)',
+      },
+      { opacity: 1, transform: 'scale(1)', filter: 'brightness(1) blur(0) saturate(1)' },
+    ],
+  },
+};
 
 // 1 · IRIS — clip-path circle collapses to a point, then expands.
 // Round-trip dimensions: 80% radius covers a 16:9 reference box corner-to-corner.
@@ -550,9 +683,49 @@ Closing.transition = {
   },
 };
 
+// 7 · CUBE — full 90° pivot on a vertical edge. The outgoing face swings away
+// around its right edge; the inbound arrives rotated 90° around its left edge
+// and squares up. Real 3D, no sprite sheet — far more aggressive than flip.
+Cli.transition = {
+  duration: 880,
+  exit: {
+    duration: 440,
+    easing: EASE_IN,
+    keyframes: [
+      {
+        opacity: 1,
+        transform: 'perspective(1800px) rotateY(0deg)',
+        transformOrigin: '100% 50%',
+      },
+      {
+        opacity: 0.2,
+        transform: 'perspective(1800px) rotateY(-92deg)',
+        transformOrigin: '100% 50%',
+      },
+    ],
+  },
+  enter: {
+    duration: 560,
+    delay: 280,
+    easing: EASE_OUT,
+    keyframes: [
+      {
+        opacity: 0.2,
+        transform: 'perspective(1800px) rotateY(92deg)',
+        transformOrigin: '0% 50%',
+      },
+      {
+        opacity: 1,
+        transform: 'perspective(1800px) rotateY(0deg)',
+        transformOrigin: '0% 50%',
+      },
+    ],
+  },
+};
+
 export const meta: SlideMeta = {
-  title: 'Maximal — Six Transitions',
+  title: 'Maximal — Eight Transitions',
   createdAt: '2026-05-24T00:00:00.000Z',
 };
 
-export default [Cover, Flip, Glitch, Warp, Sweep, Closing] satisfies Page[];
+export default [Intro, Cover, Flip, Glitch, Warp, Sweep, Closing, Cli] satisfies Page[];
