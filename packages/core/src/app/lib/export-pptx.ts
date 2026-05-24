@@ -22,6 +22,23 @@ export type PptxExportProgress = {
   percent: number;
 };
 
+type Shadow = {
+  hex: string;
+  alpha: number;
+  blurPx: number;
+  offsetPx: number;
+  angleDeg: number;
+};
+
+type PptxShadow = {
+  type: 'outer';
+  color: string;
+  opacity: number;
+  blur: number;
+  offset: number;
+  angle: number;
+};
+
 type TextRun = {
   text: string;
   options: {
@@ -47,6 +64,36 @@ const BLOCK_DISPLAYS = new Set([
   'flow-root',
   'grid',
 ]);
+
+const SVG_PRESENTATION_PROPS = [
+  'fill',
+  'fill-opacity',
+  'fill-rule',
+  'stroke',
+  'stroke-width',
+  'stroke-linecap',
+  'stroke-linejoin',
+  'stroke-dasharray',
+  'stroke-dashoffset',
+  'stroke-opacity',
+  'stroke-miterlimit',
+  'opacity',
+  'visibility',
+  'display',
+  'font-family',
+  'font-size',
+  'font-weight',
+  'font-style',
+  'text-anchor',
+  'dominant-baseline',
+  'letter-spacing',
+  'transform',
+  'transform-origin',
+  'filter',
+  'mask',
+  'clip-path',
+  'mix-blend-mode',
+];
 
 export async function exportSlideAsPptx(
   slide: SlideModule,
@@ -81,6 +128,7 @@ export async function exportSlideAsPptx(
 
   try {
     await waitForFonts();
+    const fontCssPromise = collectInlineFontCss();
     for (let i = 0; i < pages.length; i++) {
       const Page = pages[i];
       if (!Page) continue;
@@ -113,7 +161,7 @@ export async function exportSlideAsPptx(
       await nextPaint();
 
       const pptxSlide = pptx.addSlide();
-      await buildSlide(pptx, pptxSlide, host);
+      await buildSlide(pptx, pptxSlide, host, fontCssPromise);
 
       root.unmount();
       container.removeChild(host);
@@ -138,7 +186,21 @@ export async function exportSlideAsPptx(
 type PptxInstance = InstanceType<typeof import('pptxgenjs').default>;
 type PptxSlide = ReturnType<PptxInstance['addSlide']>;
 
-async function buildSlide(pptx: PptxInstance, slide: PptxSlide, host: HTMLElement): Promise<void> {
+type BuildContext = {
+  pptx: PptxInstance;
+  slide: PptxSlide;
+  host: HTMLElement;
+  origin: DOMRect;
+  ops: Array<() => void | Promise<void>>;
+  fontCssPromise: Promise<string>;
+};
+
+async function buildSlide(
+  pptx: PptxInstance,
+  slide: PptxSlide,
+  host: HTMLElement,
+  fontCssPromise: Promise<string>,
+): Promise<void> {
   const origin = host.getBoundingClientRect();
 
   const rootBg = parseColor(getComputedStyle(host).backgroundColor);
@@ -150,44 +212,37 @@ async function buildSlide(pptx: PptxInstance, slide: PptxSlide, host: HTMLElemen
 
   // Image work is async; collect ops in DOM order, then run sequentially so
   // shapes keep their stacking order in the final deck.
-  const ops: Array<() => void | Promise<void>> = [];
-  walk(host, origin, host, slide, pptx, ops);
-  for (const op of ops) await op();
+  const ctx: BuildContext = { pptx, slide, host, origin, ops: [], fontCssPromise };
+  walk(host, ctx);
+  for (const op of ctx.ops) await op();
 }
 
-function walk(
-  el: HTMLElement,
-  origin: DOMRect,
-  host: HTMLElement,
-  slide: PptxSlide,
-  pptx: PptxInstance,
-  ops: Array<() => void | Promise<void>>,
-): void {
+function walk(el: HTMLElement, ctx: BuildContext): void {
   const style = getComputedStyle(el);
   if (style.display === 'none' || style.visibility === 'hidden') return;
   if (Number(style.opacity) === 0) return;
 
   const rect = el.getBoundingClientRect();
   const box = {
-    x: inches(rect.left - origin.left),
-    y: inches(rect.top - origin.top),
+    x: inches(rect.left - ctx.origin.left),
+    y: inches(rect.top - ctx.origin.top),
     w: inches(rect.width),
     h: inches(rect.height),
   };
   const hasArea = rect.width > 0.5 && rect.height > 0.5;
-
-  if (el !== host && hasArea) {
-    emitBoxDecoration(style, box, slide, pptx);
-  }
-
   const tag = el.tagName.toLowerCase();
 
   if (tag === 'img') {
     const img = el as HTMLImageElement;
     if (hasArea && img.currentSrc) {
-      ops.push(async () => {
+      const shadow = parseSimpleBoxShadow(style.boxShadow);
+      ctx.ops.push(async () => {
         const data = await toDataUrl(img.currentSrc);
-        if (data) slide.addImage({ data, ...box });
+        if (data) {
+          const opts: Record<string, unknown> = { data, ...box };
+          if (shadow) opts.shadow = toPptxShadow(shadow);
+          ctx.slide.addImage(opts as Parameters<PptxSlide['addImage']>[0]);
+        }
       });
     }
     return;
@@ -195,9 +250,9 @@ function walk(
 
   if (tag === 'svg') {
     if (hasArea) {
-      ops.push(async () => {
+      ctx.ops.push(async () => {
         const data = await rasterizeSvg(el as unknown as SVGSVGElement, rect.width, rect.height);
-        if (data) slide.addImage({ data, ...box });
+        if (data) ctx.slide.addImage({ data, ...box });
       });
     }
     return;
@@ -207,22 +262,35 @@ function walk(
     if (hasArea) {
       try {
         const data = (el as HTMLCanvasElement).toDataURL('image/png');
-        ops.push(() => {
-          slide.addImage({ data, ...box });
+        ctx.ops.push(() => {
+          ctx.slide.addImage({ data, ...box });
         });
       } catch {}
     }
     return;
   }
 
+  if (el !== ctx.host && hasArea && shouldRasterizeSubtree(style)) {
+    ctx.ops.push(async () => {
+      const fontCss = await ctx.fontCssPromise;
+      const data = await rasterizeElement(el, rect.width, rect.height, fontCss);
+      if (data) ctx.slide.addImage({ data, ...box });
+    });
+    return;
+  }
+
+  if (el !== ctx.host && hasArea) {
+    emitBoxDecoration(style, box, ctx.slide, ctx.pptx);
+  }
+
   if (isTextLeaf(el)) {
-    emitText(el, style, slide, origin, ops);
+    emitText(el, style, ctx);
     return;
   }
 
   for (const child of Array.from(el.children)) {
     if (child instanceof HTMLElement || child instanceof SVGElement) {
-      walk(child as HTMLElement, origin, host, slide, pptx, ops);
+      walk(child as HTMLElement, ctx);
     }
   }
 }
@@ -235,7 +303,8 @@ function emitBoxDecoration(
 ): void {
   const bg = parseColor(style.backgroundColor);
   const border = parseBorder(style);
-  if ((!bg || bg.a <= 0.01) && !border) return;
+  const shadow = parseSimpleBoxShadow(style.boxShadow);
+  if ((!bg || bg.a <= 0.01) && !border && !shadow) return;
 
   const radius = Math.max(
     parseFloat(style.borderTopLeftRadius) || 0,
@@ -252,6 +321,9 @@ function emitBoxDecoration(
   if (border) {
     options.line = { color: border.hex, width: border.width };
   }
+  if (shadow) {
+    options.shadow = toPptxShadow(shadow);
+  }
   if (shapeType === pptx.ShapeType.roundRect) {
     // pptx rectRadius is a fraction of the shorter side.
     const shorter = Math.min(box.w, box.h) * PX_PER_IN;
@@ -260,18 +332,7 @@ function emitBoxDecoration(
   slide.addShape(shapeType, options);
 }
 
-function emitText(
-  el: HTMLElement,
-  style: CSSStyleDeclaration,
-  slide: PptxSlide,
-  origin: DOMRect,
-  ops: Array<() => void>,
-): void {
-  const runs = collectRuns(el);
-  if (runs.length === 0) return;
-
-  // Range bounds give the actual rendered text box (tight around the glyphs),
-  // which positions correctly regardless of flex/grid centering on the element.
+function emitText(el: HTMLElement, style: CSSStyleDeclaration, ctx: BuildContext): void {
   const range = document.createRange();
   range.selectNodeContents(el);
   const bbox = range.getBoundingClientRect();
@@ -282,44 +343,52 @@ function emitText(
   let lineHeightPx = parseFloat(style.lineHeight);
   if (!Number.isFinite(lineHeightPx)) lineHeightPx = fontSizePx * 1.2;
   const align = mapTextAlign(style.textAlign);
-
-  // PowerPoint's font metrics run slightly wider than the browser's, so a box
-  // sized to the exact text width re-wraps a word onto a new line. For text
-  // the browser kept on one line, disable wrapping entirely. For genuinely
-  // wrapped text, size the box to the element's content width so PowerPoint
-  // breaks at the same place the browser did.
   const singleLine = rect.height <= lineHeightPx * 1.4;
   const isInline = style.display.startsWith('inline') && style.display !== 'inline-block';
 
+  let runs: TextRun[];
+  if (singleLine) {
+    runs = collectRuns(el);
+  } else {
+    runs = collectLineWrappedRuns(el, lineHeightPx);
+    if (runs.length === 0) runs = collectRuns(el);
+  }
+  if (runs.length === 0) return;
+
+  // For text the browser wrapped onto one line, keep the tight bbox and disable
+  // wrapping so PowerPoint's wider font metrics can't break a word. For wrapped
+  // text we've already inserted explicit breakLine markers per browser line, so
+  // we still set wrap:false but size the frame to the element's content box so
+  // alignment (center/right) resolves against the same width the browser used.
   let x: number;
   let w: number;
-  let wrap: boolean;
   if (singleLine || isInline) {
-    x = inches(rect.left - origin.left);
+    x = inches(rect.left - ctx.origin.left);
     w = inches(rect.width) + 0.12;
-    wrap = !singleLine;
   } else {
     const padL = parseFloat(style.paddingLeft) || 0;
     const padR = parseFloat(style.paddingRight) || 0;
     const borderL = parseFloat(style.borderLeftWidth) || 0;
     const contentLeft = elRect.left + borderL + padL;
     const contentWidth = el.clientWidth - padL - padR;
-    x = inches(contentLeft - origin.left);
-    w = inches(contentWidth > 1 ? contentWidth : rect.width) + 0.04;
-    wrap = true;
+    x = inches(contentLeft - ctx.origin.left);
+    w = inches(contentWidth > 1 ? contentWidth : rect.width) + 0.08;
   }
 
-  ops.push(() => {
-    slide.addText(runs, {
+  const y = inches(rect.top - ctx.origin.top);
+  const h = inches(rect.height) + 0.08;
+
+  ctx.ops.push(() => {
+    ctx.slide.addText(runs, {
       x,
-      y: inches(rect.top - origin.top),
+      y,
       w,
-      h: inches(rect.height) + 0.08,
+      h,
       align,
       valign: 'top',
       margin: 0,
       lineSpacing: points(lineHeightPx),
-      wrap,
+      wrap: false,
       autoFit: false,
     });
   });
@@ -371,9 +440,111 @@ function collectRuns(el: HTMLElement): TextRun[] {
 
   for (const child of Array.from(el.childNodes)) visit(child);
 
-  // Trim leading/trailing whitespace-only runs.
   while (runs.length && !runs[0].text.trim()) runs.shift();
   while (runs.length && !runs[runs.length - 1].text.trim()) runs.pop();
+  return runs;
+}
+
+type LineSeg = {
+  text: string;
+  style: TextRun['options'];
+  top: number;
+};
+
+function collectLineWrappedRuns(el: HTMLElement, lineHeightPx: number): TextRun[] {
+  const segs: LineSeg[] = [];
+  const range = document.createRange();
+  const tolerance = Math.max(2, lineHeightPx * 0.4);
+
+  const visit = (node: Node): void => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const tn = node as Text;
+      const parent = tn.parentElement;
+      if (!parent) return;
+      const ps = getComputedStyle(parent);
+      const style = runStyle(ps);
+      const data = tn.data;
+      if (data.length === 0) return;
+
+      let segStart = 0;
+      let segTop: number | null = null;
+      const flush = (end: number, nextTop: number | null) => {
+        if (end > segStart && segTop !== null) {
+          const text = data.slice(segStart, end).replace(/\s+/g, ' ');
+          if (text.length > 0) segs.push({ text, style, top: segTop });
+        }
+        segStart = end;
+        segTop = nextTop;
+      };
+
+      for (let i = 0; i < data.length; i++) {
+        range.setStart(tn, i);
+        range.setEnd(tn, i + 1);
+        const rects = range.getClientRects();
+        if (rects.length === 0) continue;
+        const rect = rects[0];
+        if (rect.width === 0 && rect.height === 0) continue;
+        const top = rect.top;
+        if (segTop === null) {
+          segTop = top;
+        } else if (Math.abs(top - segTop) > tolerance) {
+          flush(i, top);
+        }
+      }
+      flush(data.length, null);
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    const childEl = node as HTMLElement;
+    if (childEl.tagName.toLowerCase() === 'br') {
+      // BRs surface as a top jump in the next text node; nothing to emit here.
+      return;
+    }
+    const cs = getComputedStyle(childEl);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return;
+    for (const child of Array.from(childEl.childNodes)) visit(child);
+  };
+
+  for (const child of Array.from(el.childNodes)) visit(child);
+  if (segs.length === 0) return [];
+
+  type Line = { top: number; segs: LineSeg[] };
+  const lines: Line[] = [];
+  for (const seg of segs) {
+    const last = lines[lines.length - 1];
+    if (last && Math.abs(seg.top - last.top) <= tolerance) {
+      last.segs.push(seg);
+    } else {
+      lines.push({ top: seg.top, segs: [seg] });
+    }
+  }
+
+  const runs: TextRun[] = [];
+  for (let li = 0; li < lines.length; li++) {
+    const line = lines[li];
+    const cleaned = line.segs.map((s) => ({ ...s }));
+    if (cleaned.length > 0) {
+      cleaned[0].text = cleaned[0].text.replace(/^\s+/, '');
+      cleaned[cleaned.length - 1].text = cleaned[cleaned.length - 1].text.replace(/\s+$/, '');
+    }
+    const nonEmpty = cleaned.filter((s) => s.text.length > 0);
+    if (nonEmpty.length === 0) {
+      // preserve blank line — pptx needs a run to render the gap
+      runs.push({ text: ' ', options: { ...(li > 0 ? { breakLine: true } : {}) } });
+      continue;
+    }
+    for (let si = 0; si < nonEmpty.length; si++) {
+      const seg = nonEmpty[si];
+      const isFirstOfLine = si === 0;
+      runs.push({
+        text: seg.text,
+        options: {
+          ...seg.style,
+          ...(isFirstOfLine && li > 0 ? { breakLine: true } : {}),
+        },
+      });
+    }
+  }
   return runs;
 }
 
@@ -432,6 +603,79 @@ function toHex(r: number, g: number, b: number): string {
   return `${c(r)}${c(g)}${c(b)}`.toUpperCase();
 }
 
+function shouldRasterizeSubtree(style: CSSStyleDeclaration): boolean {
+  if (style.filter && style.filter !== 'none') return true;
+  if (style.backdropFilter && style.backdropFilter !== 'none') return true;
+  if (style.maskImage && style.maskImage !== 'none') return true;
+  const bgImage = style.backgroundImage;
+  if (bgImage && bgImage !== 'none' && bgImage.includes('gradient(')) return true;
+  const shadow = style.boxShadow;
+  if (shadow && shadow !== 'none') {
+    if (shadow.includes('inset')) return true;
+    if (splitShadowLayers(shadow).length > 1) return true;
+  }
+  return false;
+}
+
+function splitShadowLayers(value: string): string[] {
+  // Split top-level commas, ignoring commas inside parentheses (e.g. rgba()).
+  const parts: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < value.length; i++) {
+    const ch = value[i];
+    if (ch === '(') depth++;
+    else if (ch === ')') depth--;
+    else if (ch === ',' && depth === 0) {
+      parts.push(value.slice(start, i).trim());
+      start = i + 1;
+    }
+  }
+  parts.push(value.slice(start).trim());
+  return parts.filter((p) => p.length > 0);
+}
+
+function parseSimpleBoxShadow(value: string | null): Shadow | null {
+  if (!value || value === 'none') return null;
+  const layers = splitShadowLayers(value);
+  if (layers.length !== 1) return null;
+  const layer = layers[0];
+  if (layer.includes('inset')) return null;
+
+  const colorMatch = layer.match(/rgba?\([^)]+\)|#[0-9a-fA-F]{3,8}/);
+  const color = colorMatch ? parseColor(colorMatch[0]) : null;
+  const rest = colorMatch ? layer.replace(colorMatch[0], '').trim() : layer.trim();
+  const nums = rest
+    .split(/\s+/)
+    .map((s) => parseFloat(s))
+    .filter((n) => Number.isFinite(n));
+  if (nums.length < 2) return null;
+  const [offsetX, offsetY, blurPx = 0] = nums;
+  const dist = Math.hypot(offsetX, offsetY);
+  // PowerPoint angle: 0 = right, 90 = down. CSS uses (x, y) with y down,
+  // so atan2(y, x) gives the same convention.
+  let angleDeg = (Math.atan2(offsetY, offsetX) * 180) / Math.PI;
+  if (angleDeg < 0) angleDeg += 360;
+  return {
+    hex: color?.hex ?? '000000',
+    alpha: color?.a ?? 1,
+    blurPx: Math.max(0, blurPx),
+    offsetPx: dist,
+    angleDeg,
+  };
+}
+
+function toPptxShadow(s: Shadow): PptxShadow {
+  return {
+    type: 'outer',
+    color: s.hex,
+    opacity: Math.max(0, Math.min(1, s.alpha)),
+    blur: Math.min(100, points(s.blurPx)),
+    offset: Math.min(200, points(s.offsetPx)),
+    angle: Math.round(s.angleDeg) % 360,
+  };
+}
+
 function freezeAnimations(root: HTMLElement): void {
   if (typeof document.getAnimations !== 'function') return;
   for (const anim of document.getAnimations()) {
@@ -472,10 +716,16 @@ async function rasterizeSvg(
 ): Promise<string | null> {
   try {
     const clone = svg.cloneNode(true) as SVGSVGElement;
+    inlineSvgStyles(svg, clone);
     clone.setAttribute('width', String(width));
     clone.setAttribute('height', String(height));
     if (!clone.getAttribute('xmlns')) {
       clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    }
+    if (!clone.getAttribute('viewBox')) {
+      const vbW = svg.viewBox.baseVal?.width || width;
+      const vbH = svg.viewBox.baseVal?.height || height;
+      clone.setAttribute('viewBox', `0 0 ${vbW} ${vbH}`);
     }
     const serialized = new XMLSerializer().serializeToString(clone);
     const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(serialized)}`;
@@ -491,6 +741,151 @@ async function rasterizeSvg(
   } catch {
     return null;
   }
+}
+
+function inlineSvgStyles(src: Element, dst: Element): void {
+  if (!(dst instanceof Element)) return;
+  if (src instanceof SVGElement || src.namespaceURI === 'http://www.w3.org/2000/svg') {
+    const cs = getComputedStyle(src);
+    const declarations: string[] = [];
+    for (const prop of SVG_PRESENTATION_PROPS) {
+      const value = cs.getPropertyValue(prop);
+      if (value && value !== 'normal' && value !== 'auto') {
+        declarations.push(`${prop}:${value}`);
+      }
+    }
+    if (declarations.length > 0) {
+      const existing = dst.getAttribute('style') ?? '';
+      dst.setAttribute('style', `${declarations.join(';')};${existing}`);
+    }
+  }
+  const srcKids = Array.from(src.children);
+  const dstKids = Array.from(dst.children);
+  for (let i = 0; i < srcKids.length && i < dstKids.length; i++) {
+    inlineSvgStyles(srcKids[i], dstKids[i]);
+  }
+}
+
+async function rasterizeElement(
+  el: HTMLElement,
+  width: number,
+  height: number,
+  fontCss: string,
+): Promise<string | null> {
+  try {
+    const clone = el.cloneNode(true) as HTMLElement;
+    inlineHtmlStyles(el, clone);
+    await inlineImages(clone);
+    const fontStyle = fontCss
+      ? `<style xmlns="http://www.w3.org/1999/xhtml">${escapeXml(fontCss)}</style>`
+      : '';
+    const xhtml = new XMLSerializer().serializeToString(clone);
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+      `<foreignObject width="100%" height="100%">` +
+      `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden;">` +
+      `${fontStyle}${xhtml}` +
+      `</div></foreignObject></svg>`;
+    const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    const img = await loadImage(svgUrl);
+    const scale = 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(width * scale));
+    canvas.height = Math.max(1, Math.round(height * scale));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/png');
+  } catch {
+    return null;
+  }
+}
+
+function inlineHtmlStyles(src: Element, dst: Element): void {
+  if (src instanceof HTMLElement && dst instanceof HTMLElement) {
+    const cs = getComputedStyle(src);
+    let cssText = '';
+    for (let i = 0; i < cs.length; i++) {
+      const prop = cs.item(i);
+      const value = cs.getPropertyValue(prop);
+      if (value) cssText += `${prop}:${value};`;
+    }
+    dst.setAttribute('style', cssText);
+    // foreignObject ignores class-derived styles, so drop the attributes
+    // and rely on the inlined values above.
+    dst.removeAttribute('class');
+  } else if (src instanceof SVGElement && dst instanceof SVGElement) {
+    const cs = getComputedStyle(src);
+    const declarations: string[] = [];
+    for (const prop of SVG_PRESENTATION_PROPS) {
+      const value = cs.getPropertyValue(prop);
+      if (value) declarations.push(`${prop}:${value}`);
+    }
+    if (declarations.length > 0) {
+      dst.setAttribute('style', declarations.join(';'));
+    }
+    dst.removeAttribute('class');
+  }
+  const srcKids = Array.from(src.children);
+  const dstKids = Array.from(dst.children);
+  for (let i = 0; i < srcKids.length && i < dstKids.length; i++) {
+    inlineHtmlStyles(srcKids[i], dstKids[i]);
+  }
+}
+
+async function inlineImages(root: Element): Promise<void> {
+  const imgs = root.querySelectorAll('img');
+  await Promise.all(
+    Array.from(imgs).map(async (img) => {
+      const src = img.getAttribute('src') || img.currentSrc;
+      if (!src || src.startsWith('data:')) return;
+      const dataUrl = await toDataUrl(src);
+      if (dataUrl) img.setAttribute('src', dataUrl);
+    }),
+  );
+}
+
+function escapeXml(s: string): string {
+  return s.replace(/[<>&]/g, (c) => (c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&amp;'));
+}
+
+let cachedFontCss: Promise<string> | null = null;
+async function collectInlineFontCss(): Promise<string> {
+  if (cachedFontCss) return cachedFontCss;
+  cachedFontCss = (async () => {
+    const parts: string[] = [];
+    for (const sheet of Array.from(document.styleSheets)) {
+      let rules: CSSRuleList | null = null;
+      try {
+        rules = sheet.cssRules;
+      } catch {
+        rules = null;
+      }
+      if (!rules) continue;
+      const base = sheet.href ?? document.baseURI;
+      for (const rule of Array.from(rules)) {
+        if (rule.constructor.name !== 'CSSFontFaceRule') continue;
+        const fr = rule as CSSFontFaceRule;
+        let cssText = fr.cssText;
+        const urls = [...cssText.matchAll(/url\(\s*(["']?)([^"')]+)\1\s*\)/g)];
+        for (const m of urls) {
+          const orig = m[2];
+          if (orig.startsWith('data:')) continue;
+          try {
+            const absUrl = new URL(orig, base).href;
+            const res = await fetch(absUrl);
+            if (!res.ok) continue;
+            const blob = await res.blob();
+            const dataUrl = await blobToDataUrl(blob);
+            cssText = cssText.split(orig).join(dataUrl);
+          } catch {}
+        }
+        parts.push(cssText);
+      }
+    }
+    return parts.join('\n');
+  })();
+  return cachedFontCss;
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
