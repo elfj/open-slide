@@ -15,6 +15,7 @@ export type SlideMode = 'workspace' | 'standalone';
 
 export type OpenSlideConfig = {
   mode?: SlideMode;
+  base?: string;
   slidesDir?: string;
   themesDir?: string;
   assetsDir?: string;

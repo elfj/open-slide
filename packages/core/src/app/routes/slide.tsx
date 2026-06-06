@@ -38,6 +38,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -239,21 +240,37 @@ export function Slide() {
     if (playMode) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLElement && e.target.matches('input, textarea')) return;
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') {
+      if (
+        e.key === 'ArrowRight' ||
+        e.key === 'ArrowDown' ||
+        e.key === ' ' ||
+        e.key === 'PageDown'
+      ) {
         e.preventDefault();
         goTo(index + 1);
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+        return;
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
         e.preventDefault();
         goTo(index - 1);
-      } else if (e.key === 'f' || e.key === 'F') {
+        return;
+      }
+      // Letter shortcuts only fire bare so browser combos (Cmd/Ctrl-P, ⌘F…) stay intact.
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      if (e.key === 'f' || e.key === 'F') {
         setPlayMode('fullscreen');
+      } else if (e.key === 'Enter') {
+        setPlayMode('window');
+      } else if (e.key === 'p' || e.key === 'P') {
+        if (slideId) openPresenterWindow(slideId);
+        setPlayMode('window');
       } else if (import.meta.env.DEV && (e.key === 'd' || e.key === 'D')) {
         setDesignOpen((v) => !v);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [index, goTo, playMode]);
+  }, [index, goTo, playMode, slideId]);
 
   if (error) {
     return (
@@ -615,10 +632,12 @@ export function Slide() {
                       <DropdownMenuItem onSelect={() => setPlayMode('window')}>
                         <Play />
                         {t.slide.presentInWindow}
+                        <DropdownMenuShortcut>↵</DropdownMenuShortcut>
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => setPlayMode('fullscreen')}>
                         <Maximize />
                         {t.slide.presentFullscreen}
+                        <DropdownMenuShortcut>F</DropdownMenuShortcut>
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onSelect={() => {
@@ -628,6 +647,7 @@ export function Slide() {
                       >
                         <MonitorSpeaker />
                         {t.slide.presentPresenter}
+                        <DropdownMenuShortcut>P</DropdownMenuShortcut>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

@@ -13,6 +13,7 @@ declare module 'virtual:open-slide/config' {
   const config: {
     mode: SlideMode;
     standaloneSlideId: string | null;
+    base?: string;
     slidesDir?: string;
     port?: number;
     locale?: Locale;

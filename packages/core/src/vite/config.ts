@@ -53,6 +53,7 @@ export async function createViteConfig(opts: CreateViteConfigOptions): Promise<I
   const assetsAbs = path.resolve(userCwd, assetsDir);
 
   return {
+    base: config.base ?? '/',
     root: APP_ROOT,
     configFile: false,
     envDir: userCwd,
