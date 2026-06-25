@@ -49,18 +49,6 @@ const root: CSSProperties = {
   fontFamily: 'var(--osd-font-body)',
 };
 
-const glow: CSSProperties = {
-  position: 'absolute',
-  left: 418,
-  top: 220,
-  width: 1084,
-  height: 646,
-  borderRadius: 999,
-  background:
-    'radial-gradient(ellipse at center, rgba(123,220,181,0.12), rgba(138,180,255,0.065) 40%, transparent 72%)',
-  filter: 'blur(8px)',
-};
-
 const Title = () => (
   <SharedElement id="magic-title">
     <h1
@@ -101,7 +89,6 @@ const Caption = ({ id, text }: { id: string; text: string }) => (
 
 const Stage = ({ children }: { children: ReactNode }) => (
   <section style={root}>
-    <div style={glow} />
     <Title />
     {children}
   </section>
@@ -130,7 +117,6 @@ const Dot = ({
         height: size,
         borderRadius: 999,
         background: color,
-        boxShadow: `0 26px 92px color-mix(in srgb, ${color} 34%, transparent)`,
       }}
     />
   </SharedElement>
