@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 
-export type SharedElementProps = {
+export type unstable_sharedElementProps = {
   id: string;
   children: ReactNode;
   className?: string;
@@ -20,7 +20,12 @@ type SharedElementChildProps = {
   'data-osd-shared-element'?: string;
 };
 
-export function SharedElement({ id, children, className, style }: SharedElementProps) {
+export function unstable_sharedElement({
+  id,
+  children,
+  className,
+  style,
+}: unstable_sharedElementProps) {
   const child = Children.toArray(children)[0] ?? null;
 
   if (Children.count(children) === 1 && isValidElement<SharedElementChildProps>(child)) {

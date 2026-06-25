@@ -61,7 +61,7 @@ type SlideTransition = {
   enter?: TransitionPhase;
   /** Plays on the outgoing page. */
   exit?: TransitionPhase;
-  /** Matches <SharedElement id="…"> pairs and fades unmatched shared elements. */
+  /** Matches unstable_sharedElement pairs and fades unmatched shared elements. */
   sharedElements?: boolean | SharedElementTransition;
 };
 
@@ -128,15 +128,19 @@ has a literal direction (a horizontal advance, a chapter sweep).
 ## Shared elements
 
 For Keynote-style "Magic Move" continuity, wrap the same visual object on two
-pages with `SharedElement` and give both instances the same `id`. The transition
+pages with `unstable_sharedElement` and give both instances the same `id`. The transition
 layer measures the outgoing and incoming DOM, hides the originals, animates a
 clone across the canvas, then restores the incoming element.
 
 ```tsx
-import { SharedElement, type Page, type SlideTransition } from '@open-slide/core';
+import {
+  unstable_sharedElement as UnstableSharedElement,
+  type Page,
+  type SlideTransition,
+} from '@open-slide/core';
 
 const Logo = ({ x, y, size }: { x: number; y: number; size: number }) => (
-  <SharedElement id="logo">
+  <UnstableSharedElement id="logo">
     <div
       style={{
         position: 'absolute',
@@ -148,7 +152,7 @@ const Logo = ({ x, y, size }: { x: number; y: number; size: number }) => (
         background: 'var(--osd-accent)',
       }}
     />
-  </SharedElement>
+  </UnstableSharedElement>
 );
 
 const Start: Page = () => <Logo x={160} y={180} size={180} />;
@@ -168,7 +172,7 @@ export default [Start, End];
 ```
 
 Use shared elements only for the same object in a new position or size. If the
-content changes, keep that changing copy outside `SharedElement` and let it fade
+content changes, keep that changing copy outside `unstable_sharedElement` and let it fade
 as normal page content. When `sharedElements` is enabled, marked elements that
 only exist on the outgoing page fade out automatically, and marked elements that
 only exist on the incoming page fade in automatically. The runtime does not

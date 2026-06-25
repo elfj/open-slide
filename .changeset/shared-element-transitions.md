@@ -2,4 +2,4 @@
 "@open-slide/core": minor
 ---
 
-Expose SharedElement for matching, fading, and clipping visual objects across slide pages.
+Expose unstable_sharedElement for matching, fading, and clipping visual objects across slide pages.

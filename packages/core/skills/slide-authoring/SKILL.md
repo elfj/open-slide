@@ -417,16 +417,20 @@ The framework also exposes `--osd-dir` (`1` forward, `-1` backward) and `data-os
 
 ### Shared elements / Magic Move
 
-For Keynote-style continuity, import `SharedElement` from `@open-slide/core` and
+For Keynote-style continuity, import `unstable_sharedElement` from `@open-slide/core` and
 wrap the same visual object on both pages with the same `id`.
 
 ```tsx
-import { SharedElement, type Page, type SlideTransition } from '@open-slide/core';
+import {
+  unstable_sharedElement as UnstableSharedElement,
+  type Page,
+  type SlideTransition,
+} from '@open-slide/core';
 
 const Badge = ({ x, y, size }: { x: number; y: number; size: number }) => (
-  <SharedElement id="badge">
+  <UnstableSharedElement id="badge">
     <div style={{ position: 'absolute', left: x, top: y, width: size, height: size }} />
-  </SharedElement>
+  </UnstableSharedElement>
 );
 
 export const transition: SlideTransition = {
@@ -436,7 +440,7 @@ export const transition: SlideTransition = {
 ```
 
 Use it only when the object is truly the same object in a new position or size.
-If text or contents change, keep that changing content outside `SharedElement`;
+If text or contents change, keep that changing content outside `unstable_sharedElement`;
 otherwise the motion reads as one thing flying over and turning into another.
 
 For the smoothest Magic Move feel, let shared elements carry the continuity
