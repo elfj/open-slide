@@ -29,6 +29,30 @@ type Direction = 'forward' | 'backward';
 
 const DEFAULT_EASING = 'cubic-bezier(.4, 0, .2, 1)';
 const SHARED_ELEMENT_SELECTOR = '[data-osd-shared-element]';
+const TEXT_FILL_COLOR_PROPERTY = '-webkit-text-fill-color';
+const SHARED_ELEMENT_VISUAL_PROPERTIES = [
+  'opacity',
+  'color',
+  'background-color',
+  'border-top-color',
+  'border-right-color',
+  'border-bottom-color',
+  'border-left-color',
+  'outline-color',
+  'text-decoration-color',
+  TEXT_FILL_COLOR_PROPERTY,
+  '-webkit-text-stroke-color',
+  'fill',
+  'stroke',
+] as const;
+const INHERITED_VISUAL_PROPERTIES = new Set<string>([
+  'color',
+  'text-decoration-color',
+  TEXT_FILL_COLOR_PROPERTY,
+  '-webkit-text-stroke-color',
+  'fill',
+  'stroke',
+]);
 
 function runPhase(
   el: HTMLElement,
@@ -95,10 +119,34 @@ function collectSharedElements(root: HTMLElement): Map<string, HTMLElement> {
   return elements;
 }
 
-function copyComputedStyles(source: HTMLElement, target: HTMLElement): void {
+function shouldSkipCopiedStyle(
+  source: HTMLElement,
+  styles: CSSStyleDeclaration,
+  prop: string,
+  preserveInheritedVisualStyle: boolean,
+): boolean {
+  if (prop === TEXT_FILL_COLOR_PROPERTY && getStyleProperty(styles, prop) === styles.color) {
+    return true;
+  }
+
+  if (!preserveInheritedVisualStyle || !INHERITED_VISUAL_PROPERTIES.has(prop)) return false;
+
+  const parent = source.parentElement;
+  if (!parent) return false;
+
+  const parentStyles = getComputedStyle(parent);
+  return getStyleProperty(styles, prop) === getStyleProperty(parentStyles, prop);
+}
+
+function copyComputedStyles(
+  source: HTMLElement,
+  target: HTMLElement,
+  preserveInheritedVisualStyle = false,
+): void {
   const styles = getComputedStyle(source);
   for (let i = 0; i < styles.length; i++) {
     const prop = styles[i];
+    if (shouldSkipCopiedStyle(source, styles, prop, preserveInheritedVisualStyle)) continue;
     target.style.setProperty(prop, styles.getPropertyValue(prop), styles.getPropertyPriority(prop));
   }
 
@@ -107,7 +155,7 @@ function copyComputedStyles(source: HTMLElement, target: HTMLElement): void {
   for (let i = 0; i < sourceChildren.length; i++) {
     const child = targetChildren[i];
     if (!child) continue;
-    copyComputedStyles(sourceChildren[i], child);
+    copyComputedStyles(sourceChildren[i], child, true);
   }
 }
 
@@ -140,6 +188,39 @@ function radiusKeyframe(styles: CSSStyleDeclaration, scaleX = 1, scaleY = 1): Ke
     borderBottomRightRadius: scaleRadius(styles.borderBottomRightRadius, scaleX, scaleY),
     borderBottomLeftRadius: scaleRadius(styles.borderBottomLeftRadius, scaleX, scaleY),
   };
+}
+
+function getStyleProperty(styles: CSSStyleDeclaration, css: string): string {
+  return styles.getPropertyValue(css);
+}
+
+function visualStyleKeyframe(styles: CSSStyleDeclaration, opacity?: string): Keyframe {
+  const frame: Record<string, string> = {};
+  for (const prop of SHARED_ELEMENT_VISUAL_PROPERTIES) {
+    const value = getStyleProperty(styles, prop);
+    if (prop === TEXT_FILL_COLOR_PROPERTY && value === styles.color) continue;
+    if (value) frame[prop] = value;
+  }
+  if (opacity !== undefined) frame.opacity = opacity;
+  return frame;
+}
+
+function hasVisualStyleChange(from: CSSStyleDeclaration, to: CSSStyleDeclaration): boolean {
+  for (const prop of SHARED_ELEMENT_VISUAL_PROPERTIES) {
+    if (getStyleProperty(from, prop) !== getStyleProperty(to, prop)) return true;
+  }
+  return false;
+}
+
+function effectiveOpacity(el: HTMLElement, boundary: HTMLElement): string {
+  let opacity = 1;
+  let node: HTMLElement | null = el;
+  while (node && node !== boundary) {
+    const value = Number.parseFloat(getComputedStyle(node).opacity);
+    if (Number.isFinite(value)) opacity *= value;
+    node = node.parentElement;
+  }
+  return String(opacity);
 }
 
 function hideOriginal(el: HTMLElement): () => void {
@@ -187,6 +268,37 @@ function sharedElementAnimationOptions(
   };
 }
 
+function runDescendantVisualStyleTransitions(
+  clone: HTMLElement,
+  source: HTMLElement,
+  target: HTMLElement,
+  phase: ResolvedSharedElementTransition,
+): Animation[] {
+  const animations: Animation[] = [];
+  const cloneChildren = clone.querySelectorAll<HTMLElement>('*');
+  const sourceChildren = source.querySelectorAll<HTMLElement>('*');
+  const targetChildren = target.querySelectorAll<HTMLElement>('*');
+
+  for (let i = 0; i < sourceChildren.length; i++) {
+    const cloneChild = cloneChildren[i];
+    const targetChild = targetChildren[i];
+    if (!cloneChild || !targetChild) continue;
+
+    const sourceStyles = getComputedStyle(sourceChildren[i]);
+    const targetStyles = getComputedStyle(targetChild);
+    if (!hasVisualStyleChange(sourceStyles, targetStyles)) continue;
+
+    animations.push(
+      cloneChild.animate(
+        [visualStyleKeyframe(sourceStyles), visualStyleKeyframe(targetStyles)],
+        sharedElementAnimationOptions(phase),
+      ),
+    );
+  }
+
+  return animations;
+}
+
 function runStationarySharedElementAnimation(
   clone: HTMLElement,
   rect: LocalRect,
@@ -199,13 +311,13 @@ function runStationarySharedElementAnimation(
   return clone.animate(
     [
       {
+        ...visualStyleKeyframe(styles, fromOpacity),
         ...radiusKeyframe(styles),
-        opacity: fromOpacity,
         transform,
       },
       {
+        ...visualStyleKeyframe(styles, toOpacity),
         ...radiusKeyframe(styles),
-        opacity: toOpacity,
         transform,
       },
     ],
@@ -257,7 +369,7 @@ function runSharedElementTransition(
               to,
               targetStyles,
               '0',
-              targetStyles.opacity,
+              effectiveOpacity(target, incomingLayer),
               phase,
             ),
           );
@@ -276,7 +388,7 @@ function runSharedElementTransition(
           clone,
           from,
           sourceStyles,
-          sourceStyles.opacity,
+          effectiveOpacity(source, outgoingLayer),
           '0',
           phase,
         ),
@@ -295,7 +407,7 @@ function runSharedElementTransition(
           clone,
           from,
           sourceStyles,
-          sourceStyles.opacity,
+          effectiveOpacity(source, outgoingLayer),
           '0',
           phase,
         ),
@@ -310,24 +422,27 @@ function runSharedElementTransition(
 
     const sourceStyles = getComputedStyle(source);
     const targetStyles = getComputedStyle(target);
+    const fromOpacity = effectiveOpacity(source, outgoingLayer);
+    const toOpacity = effectiveOpacity(target, incomingLayer);
     const scaleX = to.width / from.width;
     const scaleY = to.height / from.height;
     animations.push(
       clone.animate(
         [
           {
+            ...visualStyleKeyframe(sourceStyles, fromOpacity),
             ...radiusKeyframe(sourceStyles),
-            opacity: sourceStyles.opacity,
             transform: `translate(${from.left}px, ${from.top}px) scale(1, 1)`,
           },
           {
+            ...visualStyleKeyframe(targetStyles, toOpacity),
             ...radiusKeyframe(targetStyles, scaleX, scaleY),
-            opacity: targetStyles.opacity,
             transform: `translate(${to.left}px, ${to.top}px) scale(${scaleX}, ${scaleY})`,
           },
         ],
         sharedElementAnimationOptions(phase),
       ),
+      ...runDescendantVisualStyleTransitions(clone, source, target, phase),
     );
   }
 
@@ -347,7 +462,7 @@ function runSharedElementTransition(
         to,
         targetStyles,
         '0',
-        targetStyles.opacity,
+        effectiveOpacity(target, incomingLayer),
         phase,
       ),
     );
