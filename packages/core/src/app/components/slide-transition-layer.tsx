@@ -511,7 +511,7 @@ export function SlideTransitionLayer({
   return (
     <div
       ref={wrapperRef}
-      className="relative h-full w-full"
+      className="relative h-full w-full overflow-hidden"
       style={{ background: 'var(--osd-bg)' }}
     >
       {OutgoingPage && outgoing !== null ? (
