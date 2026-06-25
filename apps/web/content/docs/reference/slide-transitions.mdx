@@ -127,6 +127,12 @@ has a literal direction (a horizontal advance, a chapter sweep).
 
 ## Shared elements
 
+<Callout type="warn">
+  This feature is currently unstable and subject to change. It is not
+  recommended for production. Try it out and share your feedback on
+  [GitHub](https://github.com/1weiho/open-slide/issues).
+</Callout>
+
 For Keynote-style "Magic Move" continuity, wrap the same visual object on two
 pages with `unstable_sharedElement` and give both instances the same `id`. The transition
 layer measures the outgoing and incoming DOM, hides the originals, animates a
@@ -134,13 +140,13 @@ clone across the canvas, then restores the incoming element.
 
 ```tsx
 import {
-  unstable_sharedElement as UnstableSharedElement,
+  unstable_sharedElement as SharedElement,
   type Page,
   type SlideTransition,
 } from '@open-slide/core';
 
 const Logo = ({ x, y, size }: { x: number; y: number; size: number }) => (
-  <UnstableSharedElement id="logo">
+  <SharedElement id="logo">
     <div
       style={{
         position: 'absolute',
@@ -152,7 +158,7 @@ const Logo = ({ x, y, size }: { x: number; y: number; size: number }) => (
         background: 'var(--osd-accent)',
       }}
     />
-  </UnstableSharedElement>
+  </SharedElement>
 );
 
 const Start: Page = () => <Logo x={160} y={180} size={180} />;

@@ -417,20 +417,24 @@ The framework also exposes `--osd-dir` (`1` forward, `-1` backward) and `data-os
 
 ### Shared elements / Magic Move
 
+> This feature is currently unstable and subject to change. It is not
+> recommended for production. Try it out and share your feedback on
+> [GitHub](https://github.com/1weiho/open-slide/issues).
+
 For Keynote-style continuity, import `unstable_sharedElement` from `@open-slide/core` and
 wrap the same visual object on both pages with the same `id`.
 
 ```tsx
 import {
-  unstable_sharedElement as UnstableSharedElement,
+  unstable_sharedElement as SharedElement,
   type Page,
   type SlideTransition,
 } from '@open-slide/core';
 
 const Badge = ({ x, y, size }: { x: number; y: number; size: number }) => (
-  <UnstableSharedElement id="badge">
+  <SharedElement id="badge">
     <div style={{ position: 'absolute', left: x, top: y, width: size, height: size }} />
-  </UnstableSharedElement>
+  </SharedElement>
 );
 
 export const transition: SlideTransition = {
