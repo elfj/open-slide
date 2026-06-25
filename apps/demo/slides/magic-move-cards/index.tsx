@@ -40,7 +40,6 @@ const CARD_TOP = 384;
 const CENTER_Y = CARD_TOP + CARD_HEIGHT / 2;
 const TWO_CARD_LEFT = (1920 - CARD_WIDTH * 2 - CARD_GAP) / 2;
 const THREE_CARD_LEFT = (1920 - CARD_WIDTH * 3 - CARD_GAP * 2) / 2;
-const QUEUE_LEFT = THREE_CARD_LEFT + (CARD_WIDTH + CARD_GAP) * 2;
 const BORDER = 'rgba(255, 255, 255, 0.22)';
 const CARD_FILL = 'rgba(0, 0, 0, 0.86)';
 const RED = '#ff2f50';
@@ -64,17 +63,7 @@ const vignette: CSSProperties = {
     'radial-gradient(ellipse 900px 460px at 50% 52%, transparent 36%, rgba(0,0,0,0.42) 74%, rgba(0,0,0,0.92) 100%)',
 };
 
-const Card = ({
-  id,
-  label,
-  left,
-  opacity = 1,
-}: {
-  id: string;
-  label: string;
-  left: number;
-  opacity?: number;
-}) => (
+const Card = ({ id, label, left }: { id: string; label: string; left: number }) => (
   <SharedElement id={`card-${id}`}>
     <div
       style={{
@@ -83,7 +72,6 @@ const Card = ({
         top: CARD_TOP,
         width: CARD_WIDTH,
         height: CARD_HEIGHT,
-        opacity,
         borderRadius: 'var(--osd-radius)',
         border: `2px solid ${BORDER}`,
         background: CARD_FILL,
@@ -110,7 +98,7 @@ const Card = ({
   </SharedElement>
 );
 
-const Connector = ({ id, left, opacity }: { id: string; left: number; opacity: number }) => (
+const Connector = ({ id, left }: { id: string; left: number }) => (
   <SharedElement id={`connector-${id}`}>
     <div
       style={{
@@ -119,7 +107,6 @@ const Connector = ({ id, left, opacity }: { id: string; left: number; opacity: n
         top: CENTER_Y - 17,
         width: CARD_GAP,
         height: 34,
-        opacity,
       }}
     >
       <div
@@ -159,18 +146,10 @@ const Connector = ({ id, left, opacity }: { id: string; left: number; opacity: n
   </SharedElement>
 );
 
-const Stage = ({
-  cards,
-  connectors,
-  queueOpacity,
-}: {
-  cards: 'two' | 'three';
-  connectors: number;
-  queueOpacity: number;
-}) => {
+const Stage = ({ cards, connectors }: { cards: 'two' | 'three'; connectors: boolean }) => {
   const firstLeft = cards === 'two' ? TWO_CARD_LEFT : THREE_CARD_LEFT;
   const secondLeft = firstLeft + CARD_WIDTH + CARD_GAP;
-  const thirdLeft = cards === 'two' ? QUEUE_LEFT : secondLeft + CARD_WIDTH + CARD_GAP;
+  const thirdLeft = secondLeft + CARD_WIDTH + CARD_GAP;
 
   return (
     <section style={root}>
@@ -189,19 +168,19 @@ const Stage = ({
           }}
         />
       </SharedElement>
-      <Connector id="backends-workflows" left={firstLeft + CARD_WIDTH} opacity={connectors} />
-      <Connector id="workflows-queues" left={secondLeft + CARD_WIDTH} opacity={connectors} />
+      {connectors ? <Connector id="backends-workflows" left={firstLeft + CARD_WIDTH} /> : null}
+      {connectors ? <Connector id="workflows-queues" left={secondLeft + CARD_WIDTH} /> : null}
       <Card id="backends" label="Backends" left={firstLeft} />
       <Card id="workflows" label="Workflows" left={secondLeft} />
-      <Card id="queues" label="Queues" left={thirdLeft} opacity={queueOpacity} />
+      {cards === 'three' ? <Card id="queues" label="Queues" left={thirdLeft} /> : null}
     </section>
   );
 };
 
-const TwoCards: Page = () => <Stage cards="two" connectors={0} queueOpacity={0} />;
+const TwoCards: Page = () => <Stage cards="two" connectors={false} />;
 
-const ThreeCards: Page = () => <Stage cards="three" connectors={0} queueOpacity={1} />;
+const ThreeCards: Page = () => <Stage cards="three" connectors={false} />;
 
-const ConnectedCards: Page = () => <Stage cards="three" connectors={1} queueOpacity={1} />;
+const ConnectedCards: Page = () => <Stage cards="three" connectors />;
 
 export default [TwoCards, ThreeCards, ConnectedCards] satisfies Page[];

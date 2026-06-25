@@ -61,7 +61,7 @@ type SlideTransition = {
   enter?: TransitionPhase;
   /** Plays on the outgoing page. */
   exit?: TransitionPhase;
-  /** Matches <SharedElement id="…"> pairs across the outgoing and incoming pages. */
+  /** Matches <SharedElement id="…"> pairs and fades unmatched shared elements. */
   sharedElements?: boolean | SharedElementTransition;
 };
 
@@ -169,8 +169,10 @@ export default [Start, End];
 
 Use shared elements only for the same object in a new position or size. If the
 content changes, keep that changing copy outside `SharedElement` and let it fade
-as normal page content. The runtime does not guess similar objects; the `id` is
-the contract.
+as normal page content. When `sharedElements` is enabled, marked elements that
+only exist on the outgoing page fade out automatically, and marked elements that
+only exist on the incoming page fade in automatically. The runtime does not
+guess similar objects; the `id` is the contract.
 
 ## Design principles
 

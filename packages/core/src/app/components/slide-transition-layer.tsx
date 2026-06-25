@@ -82,6 +82,10 @@ function measureLocalRect(el: HTMLElement, wrapper: HTMLElement, wrapperRect: DO
   };
 }
 
+function hasUsableRect(rect: LocalRect): boolean {
+  return rect.width > 0 && rect.height > 0;
+}
+
 function collectSharedElements(root: HTMLElement): Map<string, HTMLElement> {
   const elements = new Map<string, HTMLElement>();
   for (const el of root.querySelectorAll<HTMLElement>(SHARED_ELEMENT_SELECTOR)) {
@@ -148,6 +152,67 @@ function hideOriginal(el: HTMLElement): () => void {
   };
 }
 
+function appendPositionedClone(
+  wrapper: HTMLElement,
+  overlay: HTMLElement,
+  source: HTMLElement,
+  rect: LocalRect,
+): HTMLElement {
+  if (!overlay.parentElement) wrapper.appendChild(overlay);
+
+  const clone = cloneSharedElement(source);
+  Object.assign(clone.style, {
+    position: 'absolute',
+    left: '0',
+    top: '0',
+    width: `${rect.width}px`,
+    height: `${rect.height}px`,
+    margin: '0',
+    transformOrigin: 'top left',
+    pointerEvents: 'none',
+    boxSizing: 'border-box',
+  });
+  overlay.appendChild(clone);
+  return clone;
+}
+
+function sharedElementAnimationOptions(
+  phase: ResolvedSharedElementTransition,
+): KeyframeAnimationOptions {
+  return {
+    duration: phase.duration,
+    easing: phase.easing,
+    delay: phase.delay,
+    fill: 'both',
+  };
+}
+
+function runStationarySharedElementAnimation(
+  clone: HTMLElement,
+  rect: LocalRect,
+  styles: CSSStyleDeclaration,
+  fromOpacity: string,
+  toOpacity: string,
+  phase: ResolvedSharedElementTransition,
+): Animation {
+  const transform = `translate(${rect.left}px, ${rect.top}px) scale(1, 1)`;
+  return clone.animate(
+    [
+      {
+        ...radiusKeyframe(styles),
+        opacity: fromOpacity,
+        transform,
+      },
+      {
+        ...radiusKeyframe(styles),
+        opacity: toOpacity,
+        transform,
+      },
+    ],
+    sharedElementAnimationOptions(phase),
+  );
+}
+
 function runSharedElementTransition(
   wrapper: HTMLElement,
   outgoingLayer: HTMLElement,
@@ -171,35 +236,76 @@ function runSharedElementTransition(
 
   const animations: Animation[] = [];
   const restore: Array<() => void> = [];
-  const used = new Set<string>();
+  const outgoing = collectSharedElements(outgoingLayer);
+  const handledIncoming = new Set<string>();
 
-  for (const source of outgoingLayer.querySelectorAll<HTMLElement>(SHARED_ELEMENT_SELECTOR)) {
-    const id = source.dataset.osdSharedElement;
-    if (!id || used.has(id)) continue;
+  for (const [id, source] of outgoing) {
     const target = incoming.get(id);
-    if (!target) continue;
-
     const from = measureLocalRect(source, wrapper, wrapperRect);
+    if (!hasUsableRect(from)) {
+      if (target) {
+        const to = measureLocalRect(target, wrapper, wrapperRect);
+        if (hasUsableRect(to)) {
+          handledIncoming.add(id);
+          const clone = appendPositionedClone(wrapper, overlay, target, to);
+          restore.push(hideOriginal(target));
+
+          const targetStyles = getComputedStyle(target);
+          animations.push(
+            runStationarySharedElementAnimation(
+              clone,
+              to,
+              targetStyles,
+              '0',
+              targetStyles.opacity,
+              phase,
+            ),
+          );
+        }
+      }
+      continue;
+    }
+
+    if (!target) {
+      const clone = appendPositionedClone(wrapper, overlay, source, from);
+      restore.push(hideOriginal(source));
+
+      const sourceStyles = getComputedStyle(source);
+      animations.push(
+        runStationarySharedElementAnimation(
+          clone,
+          from,
+          sourceStyles,
+          sourceStyles.opacity,
+          '0',
+          phase,
+        ),
+      );
+      continue;
+    }
+
     const to = measureLocalRect(target, wrapper, wrapperRect);
-    if (from.width <= 0 || from.height <= 0 || to.width <= 0 || to.height <= 0) continue;
+    if (!hasUsableRect(to)) {
+      const clone = appendPositionedClone(wrapper, overlay, source, from);
+      restore.push(hideOriginal(source));
 
-    used.add(id);
-    if (!overlay.parentElement) wrapper.appendChild(overlay);
+      const sourceStyles = getComputedStyle(source);
+      animations.push(
+        runStationarySharedElementAnimation(
+          clone,
+          from,
+          sourceStyles,
+          sourceStyles.opacity,
+          '0',
+          phase,
+        ),
+      );
+      continue;
+    }
 
-    const clone = cloneSharedElement(source);
-    Object.assign(clone.style, {
-      position: 'absolute',
-      left: '0',
-      top: '0',
-      width: `${from.width}px`,
-      height: `${from.height}px`,
-      margin: '0',
-      transformOrigin: 'top left',
-      pointerEvents: 'none',
-      boxSizing: 'border-box',
-    });
-    overlay.appendChild(clone);
+    handledIncoming.add(id);
 
+    const clone = appendPositionedClone(wrapper, overlay, source, from);
     restore.push(hideOriginal(source), hideOriginal(target));
 
     const sourceStyles = getComputedStyle(source);
@@ -220,12 +326,29 @@ function runSharedElementTransition(
             transform: `translate(${to.left}px, ${to.top}px) scale(${scaleX}, ${scaleY})`,
           },
         ],
-        {
-          duration: phase.duration,
-          easing: phase.easing,
-          delay: phase.delay,
-          fill: 'both',
-        },
+        sharedElementAnimationOptions(phase),
+      ),
+    );
+  }
+
+  for (const [id, target] of incoming) {
+    if (handledIncoming.has(id) || outgoing.has(id)) continue;
+
+    const to = measureLocalRect(target, wrapper, wrapperRect);
+    if (!hasUsableRect(to)) continue;
+
+    const clone = appendPositionedClone(wrapper, overlay, target, to);
+    restore.push(hideOriginal(target));
+
+    const targetStyles = getComputedStyle(target);
+    animations.push(
+      runStationarySharedElementAnimation(
+        clone,
+        to,
+        targetStyles,
+        '0',
+        targetStyles.opacity,
+        phase,
       ),
     );
   }

@@ -440,14 +440,13 @@ If text or contents change, keep that changing content outside `SharedElement`;
 otherwise the motion reads as one thing flying over and turning into another.
 
 For the smoothest Magic Move feel, let shared elements carry the continuity
-instead of stacking a whole-page opacity transition on top of them. If a new
-object should appear during the move, render the same `SharedElement` id on the
-previous page at the target geometry with `opacity: 0`, then render it visible
-on the next page. Use the same pattern in reverse for disappearing objects.
-Lines, badges, highlights, and other supporting marks should also use
-transparent shared-element start/end states when they are part of the diagram
-being built. When opacity changes are prominent, prefer a balanced ease-in-out
-curve so objects do not pop in during the first few frames.
+instead of stacking a whole-page opacity transition on top of them. When
+`sharedElements` is enabled, a marked object that only exists on the incoming
+page fades in automatically, and one that only exists on the outgoing page fades
+out automatically. Lines, badges, highlights, and other supporting marks should
+be marked as shared elements when they are part of the diagram being built. When
+opacity changes are prominent, prefer a balanced ease-in-out curve so objects do
+not pop in during the first few frames.
 
 ### Design principles (hold the line)
 
